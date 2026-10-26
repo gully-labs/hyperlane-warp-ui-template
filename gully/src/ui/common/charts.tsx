@@ -4,6 +4,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 import { duration } from '../../bridge/format';
+import { Money } from './money';
 
 export const SERIES = { fast: '#0098D8', canonical: '#2563FF' } as const;
 
@@ -96,8 +97,8 @@ export function StackedBars({ data }: { data: { t: number; fast: number; canonic
       {hover !== undefined && (
         <Tip x={hover * bw + bw / 2} y={4} w={W}>
           <b>{new Date(data[hover].t).toLocaleString('en-GB', { weekday: 'short', hour: '2-digit', minute: '2-digit' })}</b>
-          <span>Fast {data[hover].fast.toFixed(4)} ETH</span>
-          <span>Canonical {data[hover].canonical.toFixed(4)} ETH</span>
+          <span>Fast <Money v={data[hover].fast} inline /></span>
+          <span>Canonical <Money v={data[hover].canonical} inline /></span>
           <span>{data[hover].count} transfers</span>
         </Tip>
       )}

@@ -1,7 +1,7 @@
 // Direction C (owner's pick, 2026-10-26): A's Terminal frame (stat tiles, ticker tape, live status column)
 // around B's swap card and animated route visual.
 import { CHAINS } from '../../config/chains';
-import { fmtAmount } from '../../bridge/format';
+import { asEth, ethN, fmtUsd, toUsd, useEthUsd } from '../../bridge/usd';
 import { FeedCards, RouteVisual, SwapCard } from '../b/AppB';
 import { Icon } from '../common/icons';
 import { Analytics, TransfersPerHourTile, useStats } from '../common/Analytics';
@@ -14,6 +14,11 @@ export function AppC({ url }: { url: UrlOptions }) {
   const heads = useHeads();
   const act = useActivity();
   const { stats } = useStats();
+  const price = useEthUsd();
+  const tapeAmt = (v: bigint, sym: string) => {
+    const usd = toUsd(asEth(v), price);
+    return usd === null ? `${ethN(asEth(v))} ${sym}` : `${fmtUsd(usd)} · ${ethN(asEth(v))} ${sym}`;
+  };
   const fast = act.items?.filter((i) => i.kind === 'fast').length;
   const canon = act.items?.filter((i) => i.kind === 'canonical').length;
 
@@ -62,7 +67,7 @@ export function AppC({ url }: { url: UrlOptions }) {
                 <span key={`${i.key}-${n}`}>
                   <i className={`dot dot-${i.kind}`} />
                   {i.kind === 'fast' ? 'FAST' : 'CANON'} {i.direction === 'deposit' ? 'ARB→GULLY' : 'GULLY→ARB'}{' '}
-                  {fmtAmount(i.amount, 18, 4)} {i.symbol}
+                  {tapeAmt(i.amount, i.symbol)}
                 </span>
               ))}
               {!act.items?.length && <span>Waiting for live transfers…</span>}
