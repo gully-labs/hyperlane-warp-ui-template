@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Gully Bridge · design options</title>
+    <link rel="icon" type="image/png" href="http://127.0.0.1:5231/favicon-32.png" />
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@600;800&display=swap" rel="stylesheet" />
+    <style>
+      :root { --night:#05080D; --ink:#0A1018; --cyan:#00B2FA; --green:#46FB04; --white:#F2F5F7; --muted:#8A97A8; --line:rgba(138,151,168,.18); }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; height: 100%; background: var(--night); color: var(--white); font: 600 14px 'Exo 2', system-ui, sans-serif; }
+      body { display: grid; grid-template-rows: auto 1fr; }
+      header { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--ink); }
+      h1 { margin: 0; font-size: 16px; font-weight: 800; }
+      h1 small { color: var(--muted); font-weight: 600; margin-left: 6px; }
+      .seg { display: inline-flex; gap: 4px; padding: 4px; border-radius: 999px; border: 1px solid var(--line); background: var(--night); }
+      .seg button { min-height: 36px; padding: 0 14px; border-radius: 999px; border: 0; background: none; color: var(--muted); font: inherit; font-weight: 800; cursor: pointer; }
+      .seg button[aria-pressed='true'] { background: var(--cyan); color: var(--night); }
+      .desc { color: var(--muted); flex: 1 1 260px; }
+      a { color: var(--cyan); }
+      main { display: grid; place-items: start center; overflow: auto; padding: 16px; }
+      iframe { border: 1px solid var(--line); border-radius: 16px; background: var(--night); height: calc(100vh - 110px); max-width: 100%; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Gully Bridge <small>pick a direction</small></h1>
+      <div class="seg" id="dir">
+        <button data-d="a" aria-pressed="false">A · Terminal</button>
+        <button data-d="b" aria-pressed="false">B · Swap card</button>
+        <button data-d="c" aria-pressed="true">C · Hybrid</button>
+      </div>
+      <div class="seg" id="vp">
+        <button data-w="1440" aria-pressed="true">1440</button>
+        <button data-w="768" aria-pressed="false">768</button>
+        <button data-w="375" aria-pressed="false">375</button>
+      </div>
+      <span class="desc" id="desc"></span>
+      <a id="open" href="http://127.0.0.1:5231/" target="_blank" rel="noopener noreferrer">Open full page</a>
+    </header>
+    <main><iframe id="f" title="Design preview" src="http://127.0.0.1:5231/" width="1440"></iframe></main>
+    <script>
+      const ports = { a: 5231, b: 5232, c: 5234 };
+      const desc = {
+        a: 'A: close to gullychain.xyz "Terminal": stat tiles with sparklines, ticker tape, bridge card beside live status and recent transfers.',
+        c: 'C (owner pick): A’s Terminal frame (tiles, ticker, status column) around B’s swap card and animated route visual.',
+        b: 'B: bolder consumer swap card under a big animated route visual (fast arc vs canonical arc, packets for real transfers), live transfers feed.',
+      };
+      let d = new URLSearchParams(location.search).get('d') || 'c', w = 1440;
+      const f = document.getElementById('f');
+      const render = () => {
+        const url = `http://127.0.0.1:${ports[d]}/`;
+        if (f.src !== url) f.src = url;
+        f.width = w;
+        document.getElementById('open').href = url;
+        document.getElementById('desc').textContent = desc[d];
+        document.querySelectorAll('#dir button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.d === d));
+        document.querySelectorAll('#vp button').forEach((b) => b.setAttribute('aria-pressed', +b.dataset.w === w));
+      };
+      document.getElementById('dir').onclick = (e) => { if (e.target.dataset.d) { d = e.target.dataset.d; render(); } };
+      document.getElementById('vp').onclick = (e) => { if (e.target.dataset.w) { w = +e.target.dataset.w; render(); } };
+      render();
+    </script>
+  </body>
+</html>

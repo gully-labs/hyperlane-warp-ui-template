@@ -1,0 +1,90 @@
+import type { Address } from 'viem';
+
+export type ChainKey = 'arbitrumsepolia' | 'gullychaintestnet';
+
+export interface ChainInfo {
+  key: ChainKey;
+  id: number;
+  name: string;
+  short: string;
+  /** RPC the app reads from (local builds may point at a tunnel or proxy). */
+  rpc: string;
+  /** Public RPC handed to wallets in wallet_addEthereumChain: always the production URL. */
+  walletRpc: string;
+  explorer: string;
+  mailbox: Address;
+  /** Block to start scanning logs from (warp routers / bridge deployed after it). */
+  fromBlock: bigint;
+  /** First block of the Fast lane (warp routers deployed after it): backing history starts here. */
+  fastFromBlock: bigint;
+  blockSeconds: number;
+}
+
+const env = import.meta.env;
+/** relative RPC paths (local dev proxy) become absolute for viem */
+const abs = (u: string) => (u.startsWith('/') && typeof location !== 'undefined' ? `${location.origin}${u}` : u);
+
+export const CHAINS: Record<ChainKey, ChainInfo> = {
+  arbitrumsepolia: {
+    key: 'arbitrumsepolia',
+    id: 421614,
+    name: 'Arbitrum Sepolia',
+    short: 'Arb Sepolia',
+    rpc: env.VITE_ARB_RPC || 'https://sepolia-rollup.arbitrum.io/rpc',
+    walletRpc: 'https://sepolia-rollup.arbitrum.io/rpc',
+    explorer: 'https://sepolia.arbiscan.io',
+    mailbox: '0x598facE78a4302f11E3de0bee1894Da0b2Cb71F8',
+    fromBlock: 322568124n,
+    fastFromBlock: 323_100_000n, // hypETH router deployed at 323103671, gETH after it
+    blockSeconds: 0.25,
+  },
+  gullychaintestnet: {
+    key: 'gullychaintestnet',
+    id: 485590,
+    name: 'GullyChain Testnet',
+    short: 'GullyChain',
+    rpc: abs(env.VITE_GULLY_RPC || 'https://testnet-rpc.gullychain.xyz'),
+    walletRpc: 'https://testnet-rpc.gullychain.xyz',
+    explorer: 'https://testnet-explorer.gullychain.xyz',
+    mailbox: '0x5b875dac092FcA7cE0DfEe8B7C1dbBD2c2a0cfDe',
+    fromBlock: 0n,
+    fastFromBlock: 0n,
+    blockSeconds: 0.25,
+  },
+};
+
+export const PARENT: ChainKey = 'arbitrumsepolia';
+export const CHILD: ChainKey = 'gullychaintestnet';
+
+export function chainById(id: number): ChainInfo | undefined {
+  return Object.values(CHAINS).find((c) => c.id === id);
+}
+
+export function txUrl(chain: ChainKey, hash: string) {
+  return `${CHAINS[chain].explorer}/tx/${hash}`;
+}
+
+/** Arbitrum Nitro rollup bridge of GullyChain Testnet (gully-labs/arbitrum-token-bridge orbitChainsData.json). */
+export const CANONICAL = {
+  inbox: '0x7B8499f1C058c9bdE2Bc9BdFEBE40364232C52B5' as Address,
+  bridge: '0x2073106fd3fc844Bbde31f5Bf0BB91cf1e2d6C8A' as Address,
+  outbox: '0x976C651fe5E63E45C8C28449507F51548922f68c' as Address,
+  rollup: '0x85D80C06Fa5334E8Cd1C51F3F39D477E5dc35E0D' as Address,
+  arbSys: '0x0000000000000000000000000000000000000064' as Address,
+  nodeInterface: '0x00000000000000000000000000000000000000C8' as Address,
+  /** Parent-chain (L1 Sepolia) blocks in the challenge period; read live from the rollup when possible. */
+  confirmPeriodBlocks: 150n,
+  l1BlockSeconds: 12,
+};
+
+export const LINKS = {
+  explorer: 'https://testnet-explorer.gullychain.xyz',
+  faucet: 'https://testnet-faucet.gullychain.xyz',
+  docs: 'https://docs.gullychain.xyz/bridging',
+  chain: 'https://gullychain.xyz',
+  gullyLabs: 'https://gullylabs.xyz',
+  telegram: 'https://t.me/GullyChain',
+  discord: 'https://discord.com/invite/tY2ErsNNBp',
+  x: 'https://x.com/Gully_Labs',
+  hyperlane: 'https://hyperlane.xyz',
+};

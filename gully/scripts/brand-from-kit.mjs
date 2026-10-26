@@ -1,0 +1,33 @@
+// Copies the GullyChain kit v3 and the Gully Labs badge into public/, byte for byte (never re-encode a kit file).
+//   node scripts/brand-from-kit.mjs [gullychain-kit-dir] [gullylabs-kit-dir]
+import { copyFileSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+const kit = process.argv[2] || 'C:/Users/Admin/Desktop/GULLY LABS GRAPHICS/Gully Chain/brand-kit';
+const labs = process.argv[3] || 'C:/Users/Admin/Desktop/GULLY LABS GRAPHICS/Gully Labs/brand-kit';
+const pub = new URL('../public/', import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1');
+const cp = (from, to) => { mkdirSync(join(pub, to, '..'), { recursive: true }); copyFileSync(from, join(pub, to)); };
+
+cp(join(kit, 'icon/favicon-16.png'), 'favicon-16.png');
+cp(join(kit, 'icon/favicon-32.png'), 'favicon-32.png');
+cp(join(kit, 'icon/apple-touch-icon-180.png'), 'apple-touch-icon.png');
+cp(join(kit, 'icon/android-chrome-192.png'), 'android-chrome-192.png');
+cp(join(kit, 'icon/gullychain-icon-dark-512.png'), 'android-chrome-512.png');
+cp(join(kit, 'icon/gullychain-icon-transparent-512.png'), 'brand/icon/gullychain-icon-transparent-512.png');
+cp(join(kit, 'og/og-image-1200x630.png'), 'og-image.png');
+for (const f of ['gullychain-logo-transparent.png', 'gullychain-wordmark-for-dark-bg.svg']) cp(join(kit, 'logo', f), `brand/logo/${f}`);
+for (const f of readdirSync(join(kit, 'badges')).filter((f) => f.includes('-dark'))) cp(join(kit, 'badges', f), `brand/badges/${f}`);
+for (const f of readdirSync(join(labs, 'badges')).filter((f) => f.startsWith('powered-by-gully-labs-dark'))) cp(join(labs, 'badges', f), `brand/badges/${f}`);
+cp(join(kit, 'mascots/gullychain-mascot-trader.png'), 'brand/mascots/gullychain-mascot-trader.png');
+
+writeFileSync(join(pub, 'site.webmanifest'), JSON.stringify({
+  name: 'Gully Bridge', short_name: 'Gully Bridge',
+  icons: [
+    { src: 'android-chrome-192.png', sizes: '192x192', type: 'image/png' },
+    { src: 'android-chrome-512.png', sizes: '512x512', type: 'image/png' },
+  ],
+  start_url: './', theme_color: '#05080D', background_color: '#05080D', display: 'standalone',
+}, null, 2) + '\n');
+writeFileSync(join(pub, 'robots.txt'), 'User-agent: *\nAllow: /\nSitemap: https://testnet-bridge.gullychain.xyz/sitemap.xml\n');
+writeFileSync(join(pub, 'sitemap.xml'), '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>https://testnet-bridge.gullychain.xyz/</loc><changefreq>daily</changefreq></url>\n</urlset>\n');
+console.log('brand assets copied into', pub);
