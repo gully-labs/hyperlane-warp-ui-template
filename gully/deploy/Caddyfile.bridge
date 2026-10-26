@@ -1,0 +1,33 @@
+# Gully Bridge (one app: Fast lane via Hyperlane warp routes + Canonical lane via the Nitro rollup bridge).
+# Replaces the bridge block in gully-ops l3/edge/Caddyfile.l3.tpl. Static files from
+# gully-labs/hyperlane-warp-ui-template, folder gully/ (node scripts/build-staging.mjs), copied to
+# /srv/status/sites/testnet-bridge.gullychain.xyz on gully-l3 (the status Caddy sees it as /srv/sites/...).
+${L3_BRIDGE_HOST}, ${L3_BRIDGE_HOST}:2053, bridge.gullychain.xyz, bridge.gullychain.xyz:2053 {
+	tls /certs/origin.pem /certs/origin.key
+	encode zstd gzip
+	root * /srv/sites/testnet-bridge.gullychain.xyz
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		# frame-ancestors * : the /embed widget (and ?embed=1) is meant to be iframed by integrators
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://sepolia-rollup.arbitrum.io https://testnet-rpc.gullychain.xyz; frame-ancestors *; base-uri 'self'; form-action 'self'; object-src 'none'"
+	}
+	@assets path /assets/*
+	header @assets Cache-Control "public, max-age=31536000, immutable"
+	@brand path /brand/* /favicon-*.png /apple-touch-icon.png /android-chrome-*.png /og-image.png
+	header @brand Cache-Control "public, max-age=604800"
+	@html path / /index.html /embed /embed/
+	header @html Cache-Control "no-cache"
+	# single-page app: /embed and any deep link fall back to index.html
+	try_files {path} /index.html
+	file_server
+}
+
+# ROLLBACK: the previous canonical-only bridge (container gully-bridge on 172.17.0.1:8084). Leave that container
+# running until the new site has been live for a while; to roll back, replace the block above with this one and reload.
+# ${L3_BRIDGE_HOST}, ${L3_BRIDGE_HOST}:2053, bridge.gullychain.xyz, bridge.gullychain.xyz:2053 {
+# 	tls /certs/origin.pem /certs/origin.key
+# 	encode zstd gzip
+# 	reverse_proxy host.docker.internal:8084
+# }

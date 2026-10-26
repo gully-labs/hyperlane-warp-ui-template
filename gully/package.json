@@ -1,0 +1,33 @@
+{
+  "name": "@gullylabs/gully-bridge-app",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Gully Bridge: one app, two routes (Fast via Hyperlane warp routes, Canonical via the Arbitrum token bridge) between Arbitrum Sepolia and GullyChain Testnet.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "routes": "node scripts/sync-routes.mjs",
+    "brand": "node scripts/brand-from-kit.mjs",
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "build:all": "node scripts/build-all.mjs",
+    "serve": "node scripts/serve.mjs",
+    "test": "vitest --run",
+    "e2e": "node tests/e2e.mjs"
+  },
+  "dependencies": {
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "viem": "2.38.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
+    "@vitejs/plugin-react": "5.0.4",
+    "playwright": "1.56.1",
+    "typescript": "5.9.3",
+    "vite": "7.1.12",
+    "vitest": "3.2.4",
+    "yaml": "2.8.1"
+  }
+}
