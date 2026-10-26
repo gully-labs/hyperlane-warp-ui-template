@@ -97,3 +97,29 @@
 }
 .c .wrap > * { min-width: 0; max-width: 100%; }
 .c .tape { min-width: 0; }
+
+/* GullyChain product switcher (src/gc-switcher, canonical in gully-ops sites/_shared/gc-switcher) */
+.gcs { flex: none; }
+
+/* USD first, ETH second (owner rule). Long amounts step down in size instead of overflowing the card. */
+.amount input { text-overflow: ellipsis; }
+.amount.amount-md input, .swap-recv-num.amount-md { font-size: 30px; }
+.amount.amount-sm input, .swap-recv-num.amount-sm { font-size: 24px; }
+.amount.amount-xs input, .swap-recv-num.amount-xs { font-size: 19px; }
+@media (max-width: 560px) {
+  .amount.amount-md input, .swap-recv-num.amount-md { font-size: 24px; }
+  .amount.amount-sm input, .swap-recv-num.amount-sm { font-size: 20px; }
+  .amount.amount-xs input, .swap-recv-num.amount-xs { font-size: 16px; }
+}
+.amount-meta { flex-wrap: wrap; gap: 4px 10px; }
+.amount-meta > span:not(.usd-line) { margin-left: auto; }
+.amount-meta > .amount-on { margin-left: 0; }
+.usd-line { color: var(--gc-white); font-weight: 600; font-size: 14px; font-variant-numeric: tabular-nums; }
+.usd-recv { display: block; margin: 2px 0 2px; color: var(--gc-muted); }
+.money { display: inline-flex; flex-direction: column; align-items: flex-end; line-height: 1.15; min-width: 0; max-width: 100%; }
+.money .num { font-family: var(--gc-font); font-weight: 800; white-space: nowrap; }
+.money-eth { font-size: 11px; color: var(--gc-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.money.money-in { flex-direction: row; align-items: baseline; gap: 6px; }
+.money.money-in .money-eth { font-size: 12px; }
+.usd-note { margin: 10px 0 0; font-size: 12px; color: var(--gc-muted); text-align: center; }
+.analytics .usd-note { text-align: left; margin: -4px 0 12px; }

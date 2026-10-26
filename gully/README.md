@@ -27,7 +27,9 @@ template, and the template stays untouched for future upstream merges.
 | `src/bridge/localClient.ts` | built-in client: quotes (`quoteTransferRemote`), sends, tracking (Hyperlane `Mailbox.delivered`, the computed deposit tx id, the outbox leaf), claims (`constructOutboxProof` + `Outbox.executeTransaction`, BoLD rollup) |
 | `src/bridge/stats.ts` | live analytics from chain events only. Arbitrum Sepolia's public RPC allows only 100k blocks per `eth_getLogs` when a filter position has several values, so those queries go out in 90k-block windows. |
 | `src/ui/c/AppC.tsx` | **the shipped design** (owner pick, "C · Hybrid"). `src/ui/a` and `src/ui/b` are the two earlier directions, kept for the picker. |
-| `deploy/Caddyfile.bridge` | Caddy block for gully-l3 (static files, SPA fallback, CSP, rollback to the old container) |
+| `deploy/Caddyfile.bridge` | Caddy block for gully-l3 (static files, SPA fallback, CSP, rollback to the old container). `connect-src` allows `api.redstone.finance` and `api.coingecko.com` for the ETH/USD price. |
+| `src/gc-switcher/` | the GullyChain product switcher, a byte-identical copy of gully-ops `sites/_shared/gc-switcher` (spec in its README). Do not edit it here. |
+| `src/bridge/usd.ts`, `src/ui/common/money.tsx` | USD first, ETH second: mainnet ETH/USD from the RedStone API, then GullyPriceFeed on chain, then CoinGecko, cached 60 s (the same helper as gully-explorer). With no price, amounts show in ETH only. |
 
 ## Integrators
 
