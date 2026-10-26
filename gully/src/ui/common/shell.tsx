@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { CHAINS, LINKS, type ChainKey } from '../../config/chains';
+import { GullySignIn } from '../../gully-id/GullySignIn';
 import type { BridgeState } from '../useBridge';
 import { Icon, type IconName } from './icons';
 import { ChainMark, Ext, WalletButton } from './parts';
@@ -42,6 +43,7 @@ export function Header({ className = '' }: { className?: string }) {
             <span className="live-dot" />
             Testnet
           </span>
+          <GullySignIn />
           <WalletButton compact />
           <button className="icon-btn menu-btn" aria-label="Menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
             <Icon name={open ? 'x' : 'menu'} />

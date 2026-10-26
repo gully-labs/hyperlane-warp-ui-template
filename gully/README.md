@@ -35,6 +35,19 @@ template, and the template stays untouched for future upstream merges.
 - `?embed=1` or `/embed`: the card only, transparent background. It posts `{type:'gully-bridge', event:{type:'ready'}}` to the parent window.
 - Other query parameters: `direction=deposit|withdraw`, `route=fast|canonical`, `amount=0.01`.
 
+## Sign in with Gully (feature flag, off by default)
+
+`VITE_GULLY_ID_CLIENT_ID=gully-bridge` at build time adds a "Sign in with Gully" button to the header
+(`src/gully-id/`). It lazily loads `https://id.gullychain.xyz/sdk.js` (override with `VITE_GULLY_ID_ISSUER`) and shows
+the user's .gully name and avatar, plus their Gully ID wallet address when the profile has one. It is identity only:
+transfers are still signed by the wallet connected with Connect, and nothing is auto-connected. Unset = no button and
+the SDK is never requested; if the SDK fails to load the button simply does not appear. Needs the CSP in
+`deploy/Caddyfile.bridge` (id.gullychain.xyz in script-src and connect-src, https: in img-src).
+
+```sh
+VITE_GULLY_ID_CLIENT_ID=gully-bridge node scripts/build-staging.mjs <out>
+```
+
 ## Commands
 
 ```sh
