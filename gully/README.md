@@ -27,9 +27,10 @@ template, and the template stays untouched for future upstream merges.
 | `src/bridge/localClient.ts` | built-in client: quotes (`quoteTransferRemote`), sends, tracking (Hyperlane `Mailbox.delivered`, the computed deposit tx id, the outbox leaf), claims (`constructOutboxProof` + `Outbox.executeTransaction`, BoLD rollup) |
 | `src/bridge/stats.ts` | live analytics from chain events only. Arbitrum Sepolia's public RPC allows only 100k blocks per `eth_getLogs` when a filter position has several values, so those queries go out in 90k-block windows. |
 | `src/ui/c/AppC.tsx` | **the shipped design** (owner pick, "C · Hybrid"). `src/ui/a` and `src/ui/b` are the two earlier directions, kept for the picker. |
-| `deploy/Caddyfile.bridge` | Caddy block for gully-l3 (static files, SPA fallback, CSP, rollback to the old container). `connect-src` allows `api.redstone.finance` and `api.coingecko.com` for the ETH/USD price. |
+| `deploy/Caddyfile.bridge` | Caddy block for gully-l3 (static files, SPA fallback, CSP, rollback to the old container). `connect-src` allows every GullyChain RPC of the fallback list, `gullychain.xyz` (ETH/USD off a gullychain host) and `api.redstone.finance`. |
 | `src/gc-switcher/` | the GullyChain product switcher, a byte-identical copy of gully-ops `sites/_shared/gc-switcher` (spec in its README). Do not edit it here. |
-| `src/bridge/usd.ts`, `src/ui/common/money.tsx` | USD first, ETH second: mainnet ETH/USD from the RedStone API, then GullyPriceFeed on chain, then CoinGecko, cached 60 s (the same helper as gully-explorer). With no price, amounts show in ETH only. |
+| `src/config/rpc.ts`, `src/bridge/clients.ts` | GullyChain RPC fallback: viem `fallback()` (rank off, 8 s per URL) over same-origin `/rpc` (on a gullychain.xyz host), `rpc.gullychain.xyz`, `rpc.gullyrpc.xyz/gullychain/evm/485590`, `rpc2.gullychain.xyz`, `testnet-rpc.gullychain.xyz`. `VITE_GULLY_RPC` (comma-separated) goes in front. Wallets get rpc.gullychain.xyz, rpc.gullyrpc.xyz, testnet-rpc (rpc2 once its DNS exists). |
+| `src/bridge/usd.ts`, `src/ui/common/money.tsx` | USD first, ETH second: Gully's `/price/eth` (same-origin, else gullychain.xyz), then the RedStone API, then GullyPriceFeed on chain through the RPC fallback; no CoinGecko from the browser. Cached 60 s. With no price, amounts show in ETH only. |
 
 ## Integrators
 
@@ -63,8 +64,10 @@ BASE=http://127.0.0.1:5234/ CHROME=<chrome.exe> node tests/e2e.mjs   # Playwrigh
 node scripts/build-staging.mjs <out>   # production static build (direction C, production RPCs)
 ```
 
-Deploy (owner): copy the staging folder to `/srv/status/sites/testnet-bridge.gullychain.xyz` on gully-l3, then
-swap the bridge block in `gully-ops/l3/edge/Caddyfile.l3.tpl` for `deploy/Caddyfile.bridge`.
+Deploy: `sh scripts/deploy-l3.sh <stagedDir>` uploads to `/srv/status/sites/testnet-bridge.gullychain.xyz.new` on
+gully-l3, copies the live `assets/` into it without overwriting (`cp -rn`, so open tabs keep finding their old lazy
+chunks), swaps live -> `.old` and `.new` -> live, then checks the page and every JS chunk on both hostnames. The Caddy
+block (`deploy/Caddyfile.bridge`) lives in `gully-ops/l3/edge/Caddyfile.l3.tpl`.
 
 ## Notes
 

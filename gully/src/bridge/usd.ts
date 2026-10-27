@@ -3,15 +3,17 @@
  * Testnet ETH has no value: every $ here is the test ETH amount at the *mainnet* ETH price. Nothing is made up: with
  * no fresh price the bridge shows ETH only.
  *
- * Same sources, order, cache and formats as gully-explorer src/lib/usd.ts (and Gully Street's "≈ USD"):
- * 1. RedStone's public price API (redstone-primary-prod, the data GullyPriceFeed verifies on chain).
- * 2. GullyPriceFeed on GullyChain, read through the GullyChain RPC.
- * 3. CoinGecko simple price, fallback only.
+ * Sources, in order (Gully RPC fallback contract, 2026-10-26; no CoinGecko calls from the browser):
+ * 1. Gully's ETH/USD endpoint `GET /price/eth`: same-origin on a gullychain.xyz host, else https://gullychain.xyz
+ *    (server-side cache of 60 s, CORS *).
+ * 2. RedStone's public price API (redstone-primary-prod, the data GullyPriceFeed verifies on chain).
+ * 3. GullyPriceFeed on GullyChain, read through the GullyChain RPC fallback transport.
  * Cached for 60 s and refreshed every 60 s while the page is open.
  */
 import { useSyncExternalStore } from 'react';
 import { formatUnits, stringToHex } from 'viem';
 
+import { gullyPriceUrl } from '../config/rpc';
 import { pub } from './clients';
 
 export interface EthUsd {
@@ -19,11 +21,10 @@ export interface EthUsd {
   usd: number;
   /** data timestamp, ms */
   at: number;
-  source: 'RedStone API' | 'GullyPriceFeed' | 'CoinGecko';
+  source: 'Gully price API' | 'RedStone API' | 'GullyPriceFeed';
 }
 
 export const REDSTONE_PRICE_URL = 'https://api.redstone.finance/prices?symbols=ETH&provider=redstone-primary-prod';
-export const COINGECKO_PRICE_URL = 'https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd&include_last_updated_at=true';
 /** GullyPriceFeed v1.0.0 on chain 485590 (RedStone primary-prod, 8 decimals) */
 export const PRICE_FEED = '0x4c64c79ee59a83842a22c14712D66bfef48eb301' as const;
 /** older than this and the price is not shown */
@@ -56,12 +57,12 @@ export function parseRedstone(json: unknown, now = Date.now()): EthUsd | null {
   return { usd: e.value, at: e.timestamp, source: 'RedStone API' };
 }
 
-/** CoinGecko's JSON ({ ethereum: { usd, last_updated_at } }); null on anything odd or stale. */
-export function parseCoingecko(json: unknown, now = Date.now()): EthUsd | null {
-  const e = (json as { ethereum?: { usd?: unknown; last_updated_at?: unknown } } | null)?.ethereum;
-  if (!e || !sane(e.usd)) return null;
-  const at = typeof e.last_updated_at === 'number' ? e.last_updated_at * 1000 : now;
-  return fresh(at, now) ? { usd: e.usd, at, source: 'CoinGecko' } : null;
+/** Gully's /price/eth JSON ({ symbol: 'ETH', usd, source, ts } with ts in seconds); null on anything odd or stale. */
+export function parseGullyPrice(json: unknown, now = Date.now()): EthUsd | null {
+  const e = json as { symbol?: unknown; usd?: unknown; ts?: unknown } | null;
+  if (!e || (e.symbol !== undefined && e.symbol !== 'ETH') || !sane(e.usd) || typeof e.ts !== 'number') return null;
+  const at = e.ts * 1000;
+  return fresh(at, now) ? { usd: e.usd, at, source: 'Gully price API' } : null;
 }
 
 async function getJson(url: string): Promise<unknown> {
@@ -78,7 +79,11 @@ async function fromFeed(): Promise<EthUsd | null> {
 }
 
 export async function fetchEthUsd(): Promise<EthUsd | null> {
-  const sources: (() => Promise<EthUsd | null>)[] = [async () => parseRedstone(await getJson(REDSTONE_PRICE_URL)), fromFeed, async () => parseCoingecko(await getJson(COINGECKO_PRICE_URL))];
+  const sources: (() => Promise<EthUsd | null>)[] = [
+    async () => parseGullyPrice(await getJson(gullyPriceUrl())),
+    async () => parseRedstone(await getJson(REDSTONE_PRICE_URL)),
+    fromFeed,
+  ];
   for (const s of sources) {
     try {
       const p = await s();

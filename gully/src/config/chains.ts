@@ -1,5 +1,7 @@
 import type { Address } from 'viem';
 
+import { GULLY_WALLET_RPCS, gullyRpcList } from './rpc';
+
 export type ChainKey = 'arbitrumsepolia' | 'gullychaintestnet';
 
 export interface ChainInfo {
@@ -7,10 +9,10 @@ export interface ChainInfo {
   id: number;
   name: string;
   short: string;
-  /** RPC the app reads from (local builds may point at a tunnel or proxy). */
-  rpc: string;
-  /** Public RPC handed to wallets in wallet_addEthereumChain: always the production URL. */
-  walletRpc: string;
+  /** RPCs the app reads from, in fallback order (first healthy wins; local builds may put a tunnel or proxy first). */
+  rpcs: string[];
+  /** Public RPCs handed to wallets in wallet_addEthereumChain (rpcUrls[0] is the one MetaMask uses). */
+  walletRpcs: string[];
   explorer: string;
   mailbox: Address;
   /** Block to start scanning logs from (warp routers / bridge deployed after it). */
@@ -21,8 +23,6 @@ export interface ChainInfo {
 }
 
 const env = import.meta.env;
-/** relative RPC paths (local dev proxy) become absolute for viem */
-const abs = (u: string) => (u.startsWith('/') && typeof location !== 'undefined' ? `${location.origin}${u}` : u);
 
 export const CHAINS: Record<ChainKey, ChainInfo> = {
   arbitrumsepolia: {
@@ -30,8 +30,8 @@ export const CHAINS: Record<ChainKey, ChainInfo> = {
     id: 421614,
     name: 'Arbitrum Sepolia',
     short: 'Arb Sepolia',
-    rpc: env.VITE_ARB_RPC || 'https://sepolia-rollup.arbitrum.io/rpc',
-    walletRpc: 'https://sepolia-rollup.arbitrum.io/rpc',
+    rpcs: [env.VITE_ARB_RPC || 'https://sepolia-rollup.arbitrum.io/rpc'],
+    walletRpcs: ['https://sepolia-rollup.arbitrum.io/rpc'],
     explorer: 'https://sepolia.arbiscan.io',
     mailbox: '0x598facE78a4302f11E3de0bee1894Da0b2Cb71F8',
     fromBlock: 322568124n,
@@ -43,8 +43,9 @@ export const CHAINS: Record<ChainKey, ChainInfo> = {
     id: 485590,
     name: 'GullyChain Testnet',
     short: 'GullyChain',
-    rpc: abs(env.VITE_GULLY_RPC || 'https://testnet-rpc.gullychain.xyz'),
-    walletRpc: 'https://testnet-rpc.gullychain.xyz',
+    // VITE_GULLY_RPC (optional, comma-separated) goes first, then same-origin /rpc, then the public list (config/rpc.ts)
+    rpcs: gullyRpcList(env.VITE_GULLY_RPC),
+    walletRpcs: [...GULLY_WALLET_RPCS],
     explorer: 'https://testnet-explorer.gullychain.xyz',
     mailbox: '0x5b875dac092FcA7cE0DfEe8B7C1dbBD2c2a0cfDe',
     fromBlock: 0n,

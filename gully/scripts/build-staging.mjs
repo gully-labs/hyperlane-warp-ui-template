@@ -13,7 +13,8 @@ execFileSync(process.execPath, ['node_modules/vite/bin/vite.js', 'build', '--mod
     VITE_DIRECTION: 'c',
     VITE_OUT_DIR: out,
     VITE_SITE_URL: 'https://testnet-bridge.gullychain.xyz/',
-    VITE_GULLY_RPC: 'https://testnet-rpc.gullychain.xyz',
+    // VITE_GULLY_RPC unset: same-origin /rpc, then the public fallback list in src/config/rpc.ts
+    VITE_GULLY_RPC: '',
     VITE_ARB_RPC: 'https://sepolia-rollup.arbitrum.io/rpc',
     VITE_ROBOTS: 'index, follow',
   },
