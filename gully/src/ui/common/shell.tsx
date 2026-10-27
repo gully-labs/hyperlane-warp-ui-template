@@ -5,6 +5,7 @@ import { GullySignIn } from '../../gully-id/GullySignIn';
 import type { BridgeState } from '../useBridge';
 import { Icon, type IconName } from './icons';
 import { ChainMark, Ext, WalletButton } from './parts';
+import { GullyChainSwitcher } from '../../gc-switcher/GullyChainSwitcher';
 
 const NAV: { label: string; icon: IconName; href: string; ext?: boolean }[] = [
   { label: 'Bridge', icon: 'bridge', href: '#bridge' },
@@ -19,10 +20,7 @@ export function Header({ className = '' }: { className?: string }) {
   return (
     <header className={`top ${className}`}>
       <div className="top-in">
-        <a className="brand" href="./" aria-label="Gully Bridge home">
-          <img src="brand/logo/gullychain-logo-transparent.png" width={1315} height={305} alt="GullyChain" />
-          <span className="brand-sub">Bridge</span>
-        </a>
+        <GullyChainSwitcher current="bridge" className="gcs" />
         <nav className={`nav ${open ? 'nav-open' : ''}`} aria-label="Main">
           {NAV.map((n) =>
             n.ext ? (

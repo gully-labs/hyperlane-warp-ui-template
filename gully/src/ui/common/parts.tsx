@@ -7,6 +7,8 @@ import { connect, disconnect, startDiscovery, type WalletInfo } from '../../brid
 import type { BridgeState, StepState } from '../useBridge';
 import { useWallet } from '../useBridge';
 import { Icon, type IconName } from './icons';
+import { Money, UsdLine } from './money';
+import { ethN } from '../../bridge/usd';
 
 /** Signature button: pill, left icon, sliding arrow, shine sweep, 0.98 pressed. */
 export function Btn({
@@ -32,7 +34,23 @@ export function Btn({
   );
 }
 
+/** Gully products are one family: links between them open in the same tab; only truly external links get a new tab. */
+export const GULLY_HOST = /(^|\.)(gullychain|gullylabs|gullypay|gullyrpc|holdermaps|gullysecurity|gullystudio|gullyai)\.xyz$/;
+export function isGully(href: string) {
+  try {
+    return GULLY_HOST.test(new URL(href).hostname);
+  } catch {
+    return true; // relative link
+  }
+}
+
 export function Ext({ href, children, className }: { href: string; children: ReactNode; className?: string }) {
+  if (isGully(href))
+    return (
+      <a href={href} className={className}>
+        {children}
+      </a>
+    );
   return (
     <a href={href} target="_blank" rel="noopener noreferrer" className={className}>
       {children}
@@ -187,7 +205,7 @@ export function WalletModal({ onClose }: { onClose: () => void }) {
 export function AmountField({ b, big }: { b: BridgeState; big?: boolean }) {
   const sym = b.quote?.sendSymbol || (b.direction === 'withdraw' && b.kind === 'fast' ? b.route.tokens.gullychaintestnet.symbol : 'ETH');
   return (
-    <div className={`amount ${big ? 'amount-big' : ''}`}>
+    <div className={`amount ${big ? 'amount-big' : ''} ${amountSize(b.amountText)}`}>
       <label htmlFor="amount">You send</label>
       <div className="amount-row">
         <input
@@ -205,17 +223,18 @@ export function AmountField({ b, big }: { b: BridgeState; big?: boolean }) {
         </span>
       </div>
       <div className="amount-meta" id="amount-bal">
+        <UsdLine v={b.amount && b.amount > 0n ? b.amount : null} />
         {b.wallet.address && b.balanceFrom !== undefined ? (
           <>
             <span>
-              Balance {fmtAmount(b.balanceFrom)} {sym}
+              Balance {ethN(Number(fmtAmount(b.balanceFrom, 18, 18).replaceAll(',', '')))} {sym}
             </span>
             <button className="link-btn" onClick={() => b.setAmountText(fmtAmount(b.balanceFrom!, 18, 18).replaceAll(',', ''))}>
               Max
             </button>
           </>
         ) : (
-          <span>on {CHAINS[b.from].name}</span>
+          <span className="amount-on">on {CHAINS[b.from].name}</span>
         )}
       </div>
     </div>
@@ -279,13 +298,13 @@ export function QuoteDetails({ b }: { b: BridgeState }) {
       <div>
         <dt>You receive</dt>
         <dd>
-          {amt ? fmtAmount(q.receive) : '–'} {q.receiveSymbol} <small>on {CHAINS[q.to].short}</small>
+          {amt ? <Money v={q.receive} symbol={q.receiveSymbol} inline /> : '–'} <small>on {CHAINS[q.to].short}</small>
         </dd>
       </div>
       {q.fees.map((f) => (
         <div key={f.label}>
           <dt>{f.label}</dt>
-          <dd>{f.amount === 0n ? 'Free' : `${fmtAmount(f.amount)} ${f.symbol}`}</dd>
+          <dd>{f.amount === 0n ? 'Free' : <Money v={f.amount} symbol={f.symbol} inline />}</dd>
         </div>
       ))}
       <div>
@@ -377,7 +396,7 @@ export function ActivityList({ items, error, limit = 8, preview }: { items?: Act
             <ChainMark chain={i.direction === 'deposit' ? 'gullychaintestnet' : 'arbitrumsepolia'} size={16} />
           </span>
           <span className="feed-amt">
-            {fmtAmount(i.amount, 18, 4)} {i.symbol}
+            <Money v={i.amount} symbol={i.symbol} />
           </span>
           <span className="feed-time">{i.time ? ago(i.time) : ''}</span>
           {preview ? (
@@ -409,7 +428,7 @@ export function MyTransfers({ b }: { b: BridgeState }) {
                 {t.kind === 'fast' ? 'Fast' : 'Canonical'}
               </span>
               <b>
-                {fmtAmount(BigInt(t.amount))} {t.sendSymbol}
+                <Money v={BigInt(t.amount)} symbol={t.sendSymbol} inline />
               </b>
               <span className="mine-status">{statusLabel(t)}</span>
               <Ext href={txUrl(t.from, t.originTx)} className="feed-link">
@@ -502,4 +521,10 @@ export function Footer({ minimal }: { minimal?: boolean }) {
       </div>
     </footer>
   );
+}
+
+/** Font step for the amount input: long numbers get smaller instead of overflowing the card. */
+export function amountSize(text: string) {
+  const n = text.length;
+  return n > 16 ? 'amount-xs' : n > 12 ? 'amount-sm' : n > 9 ? 'amount-md' : '';
 }

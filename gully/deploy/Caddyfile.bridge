@@ -13,7 +13,7 @@ ${L3_BRIDGE_HOST}, ${L3_BRIDGE_HOST}:2053, bridge.gullychain.xyz, bridge.gullych
 		# frame-ancestors * : the /embed widget (and ?embed=1) is meant to be iframed by integrators
 		# id.gullychain.xyz: Sign in with Gully (sdk.js + its API calls; only used when built with VITE_GULLY_ID_CLIENT_ID).
 		# img-src https: : the signed-in user's avatar (a URL from their .gully name record).
-		Content-Security-Policy "default-src 'self'; script-src 'self' https://id.gullychain.xyz; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://sepolia-rollup.arbitrum.io https://testnet-rpc.gullychain.xyz https://id.gullychain.xyz; frame-ancestors *; base-uri 'self'; form-action 'self'; object-src 'none'"
+		Content-Security-Policy "default-src 'self'; script-src 'self' https://id.gullychain.xyz; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://sepolia-rollup.arbitrum.io https://testnet-rpc.gullychain.xyz https://api.redstone.finance https://api.coingecko.com https://id.gullychain.xyz; frame-ancestors *; base-uri 'self'; form-action 'self'; object-src 'none'"
 	}
 	@assets path /assets/*
 	header @assets Cache-Control "public, max-age=31536000, immutable"

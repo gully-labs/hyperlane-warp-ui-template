@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { getBridgeClient } from '../../bridge/bridgeClient';
-import { ago, duration, fmtAmount } from '../../bridge/format';
+import { ago, duration } from '../../bridge/format';
 import { hourly, WINDOW_HOURS, type BridgeStats } from '../../bridge/stats';
 import { BackingGauge, BackingLines, ChartCard, DeliveryChart, Donut, Empty, Legend, SERIES, StackedBars } from './charts';
 import { Icon } from './icons';
 import { Sparkline } from './parts';
+import { Money, UsdNote } from './money';
+import { asEth, ethN, fmtUsd, toUsd, useEthUsd } from '../../bridge/usd';
 
 export function useStats(intervalMs = 30000) {
   const [stats, setStats] = useState<BridgeStats>();
@@ -53,6 +55,12 @@ export function TransfersPerHourTile({ stats }: { stats?: BridgeStats }) {
 }
 
 export function Analytics() {
+  const price = useEthUsd();
+  const totalLabel = (wei: bigint) => {
+    const e = asEth(wei);
+    const usd = toUsd(e, price);
+    return usd === null ? `${ethN(e)} ETH total` : `${fmtUsd(usd)} total · ${ethN(e)} ETH`;
+  };
   const { stats, error } = useStats();
   const [, tick] = useState(0);
   useEffect(() => {
@@ -97,10 +105,11 @@ export function Analytics() {
       <h2 className="label section-label">
         <Icon name="activity" size={14} /> Bridge analytics <small className="muted">live from both chains · {WINDOW_HOURS}h</small>
       </h2>
+      <UsdNote />
       <div className="an-grid">
         <ChartCard
-          title="ETH bridged per hour"
-          sub={`${fmtAmount(t.reduce((a, x) => a + x.amount, 0n), 18, 4)} ETH total`}
+          title={price ? 'Value bridged per hour' : 'ETH bridged per hour'}
+          sub={totalLabel(t.reduce((a, x) => a + x.amount, 0n))}
           className="an-wide"
           legend={<Legend items={[{ label: 'Fast', color: SERIES.fast }, { label: 'Canonical', color: SERIES.canonical }]} />}
         >
@@ -129,8 +138,8 @@ export function Analytics() {
             <>
               <BackingGauge supply={Number(b.supply) / 1e18} locked={Number(b.locked) / 1e18} symbol={b.symbol} />
               <dl className="kv">
-                <div><dt>{b.symbol} supply</dt><dd>{fmtAmount(b.supply)}</dd></div>
-                <div><dt>ETH locked</dt><dd>{fmtAmount(b.locked)}</dd></div>
+                <div><dt>{b.symbol} supply</dt><dd><Money v={b.supply} symbol={b.symbol} inline /></dd></div>
+                <div><dt>ETH locked</dt><dd><Money v={b.locked} inline /></dd></div>
               </dl>
               <Legend items={[{ label: 'Locked ETH', color: SERIES.canonical }, { label: `${b.symbol} supply (dashed)`, color: SERIES.fast }]} />
               <BackingLines series={b.series} symbol={b.symbol} />
@@ -157,7 +166,7 @@ export function Analytics() {
                 const left = Math.max(0, w.readyAt - Date.now());
                 return (
                   <li key={w.position.toString()}>
-                    <span>{fmtAmount(w.amount, 18, 4)} ETH</span>
+                    <span><Money v={w.amount} inline /></span>
                     <small>
                       {w.claimable
                         ? 'Ready to claim'

@@ -2,9 +2,11 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { CHAINS } from '../../config/chains';
-import { duration, fmtAmount } from '../../bridge/format';
+import { duration } from '../../bridge/format';
 import type { ActivityItem } from '../../bridge/types';
 import { Icon } from '../common/icons';
+import { Money, UsdLine, UsdNote } from '../common/money';
+import { asEth, ethN } from '../../bridge/usd';
 import { ActionButton, ActivityList, AmountField, ChainMark, Footer, MyTransfers, QuoteDetails, Stepper } from '../common/parts';
 import { Header } from '../common/shell';
 import { useActivity, useBridge, useHeads, type BridgeState, type UrlOptions } from '../useBridge';
@@ -152,9 +154,7 @@ export function FeedCards({ items }: { items?: ActivityItem[] }) {
         {[...row, ...row].map((i, n) => (
           <span key={`${i.key}-${n}`} className={`mcard mcard-${i.kind}`}>
             <Icon name={i.kind === 'fast' ? 'zap' : 'shield'} size={14} />
-            <b>
-              {fmtAmount(i.amount, 18, 4)} {i.symbol}
-            </b>
+            <Money v={i.amount} symbol={i.symbol} inline />
             <small>{i.direction === 'deposit' ? 'Arb → Gully' : 'Gully → Arb'}</small>
           </span>
         ))}
@@ -187,12 +187,13 @@ export function SwapCard({ b, title = 'Bridge' }: { b: BridgeState; title?: stri
           <span>To {CHAINS[b.to].name}</span>
         </div>
         <div className="swap-recv">
-          <span className="swap-recv-num">{b.quote && b.amount ? fmtAmount(b.quote.receive) : '0.0'}</span>
+          <span className={`swap-recv-num ${recvSize(b.quote && b.amount ? ethN(asEth(b.quote.receive)) : '')}`}>{b.quote && b.amount ? ethN(asEth(b.quote.receive)) : '0.0'}</span>
           <span className="token-chip">
             <ChainMark chain={b.to} size={20} />
             {b.quote?.receiveSymbol || 'ETH'}
           </span>
         </div>
+        <UsdLine v={b.quote && b.amount ? b.quote.receive : null} className="usd-recv" />
         <small className="muted">
           {b.quote ? `Arrives ${duration(b.quote.etaSeconds)}${b.kind === 'canonical' && b.direction === 'withdraw' ? ', then claim' : ''}` : 'Getting a quote…'}
         </small>
@@ -200,7 +201,14 @@ export function SwapCard({ b, title = 'Bridge' }: { b: BridgeState; title?: stri
       <QuoteDetails b={b} />
       {b.stepDefs.length > 0 && <Stepper defs={b.stepDefs} state={b.steps} compact />}
       <ActionButton b={b} />
+      <UsdNote />
     </section>
   
   );
+}
+
+/** Font step for the receive amount, like the input's. */
+function recvSize(text: string) {
+  const n = text.length;
+  return n > 16 ? 'amount-xs' : n > 12 ? 'amount-sm' : n > 9 ? 'amount-md' : '';
 }
