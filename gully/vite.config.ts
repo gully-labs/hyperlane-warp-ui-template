@@ -19,6 +19,19 @@ export default defineConfig(({ mode }) => {
             .replaceAll('%SITE_URL%', site)
             .replaceAll('%ROBOTS%', env.VITE_ROBOTS || 'index, follow'),
       },
+      {
+        // sitemap.xml with the build date as lastmod (the bridge is one indexable page; /embed is noindex)
+        name: 'gully-sitemap',
+        apply: 'build',
+        generateBundle() {
+          const lastmod = new Date().toISOString().slice(0, 10);
+          this.emitFile({
+            type: 'asset',
+            fileName: 'sitemap.xml',
+            source: `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>${site}</loc><lastmod>${lastmod}</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>\n</urlset>\n`,
+          });
+        },
+      },
     ],
     build: { outDir: env.VITE_OUT_DIR || 'dist', emptyOutDir: true, chunkSizeWarningLimit: 900 },
     // Local only: the laptop cannot reach *.gullychain.xyz, so dev servers proxy GullyChain RPC to the SSH tunnel.
