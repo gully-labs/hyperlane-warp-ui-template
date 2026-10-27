@@ -15,11 +15,12 @@ export const GULLY_PUBLIC_RPCS = [
 
 /**
  * rpcUrls handed to wallets (wallet_addEthereumChain): MetaMask uses rpcUrls[0], so the canonical URL goes first.
- * TODO: add https://rpc2.gullychain.xyz once its DNS record exists.
+ * Same order as GULLY_PUBLIC_RPCS (all live since 2026-10-27).
  */
 export const GULLY_WALLET_RPCS = [
   'https://rpc.gullychain.xyz',
   'https://rpc.gullyrpc.xyz/gullychain/evm/485590',
+  'https://rpc2.gullychain.xyz',
   'https://testnet-rpc.gullychain.xyz',
 ] as const;
 
