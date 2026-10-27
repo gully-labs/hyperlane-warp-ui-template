@@ -125,7 +125,7 @@ export async function ensureChain(key: ChainKey) {
           chainId: numberToHex(c.id),
           chainName: c.name,
           nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
-          rpcUrls: [c.walletRpc],
+          rpcUrls: c.walletRpcs,
           blockExplorerUrls: [c.explorer],
         },
       ],
