@@ -21,6 +21,15 @@ if (url.embed) {
 }
 if (url.preview) document.documentElement.classList.add('is-preview');
 
+// Caddy serves index.html for every path. Only "/" (any query) is the indexable page: the embed widget and unknown
+// paths get noindex, and drop the canonical so noindex and a canonical to "/" do not send mixed signals.
+const indexable = !url.embed && ['/', '/index.html'].includes(location.pathname);
+if (!indexable) {
+  document.querySelector('meta[name="robots"]')?.setAttribute('content', 'noindex, follow');
+  document.querySelector('link[rel="canonical"]')?.remove();
+  document.querySelector('meta[property="og:url"]')?.remove();
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     {direction === 'a' ? <AppA url={url} /> : direction === 'b' ? <AppB url={url} /> : <AppC url={url} />}

@@ -44,8 +44,11 @@ export function isGully(href: string) {
   }
 }
 
-export function Ext({ href, children, className }: { href: string; children: ReactNode; className?: string }) {
-  if (isGully(href))
+// Gully hosts open in the same tab (product navigation), except with `newTab` (explorer tx links: a transfer in
+// progress must stay on screen) and inside the embed, where a same-tab link would navigate the integrator's iframe.
+export function Ext({ href, children, className, newTab }: { href: string; children: ReactNode; className?: string; newTab?: boolean }) {
+  const embedded = typeof document !== 'undefined' && document.documentElement.classList.contains('is-embed');
+  if (isGully(href) && !newTab && !embedded)
     return (
       <a href={href} className={className}>
         {children}
@@ -402,7 +405,7 @@ export function ActivityList({ items, error, limit = 8, preview }: { items?: Act
           {preview ? (
             <span className="feed-link" />
           ) : (
-            <Ext href={txUrl(i.chain, i.tx)} className="feed-link">
+            <Ext href={txUrl(i.chain, i.tx)} className="feed-link" newTab>
               <Icon name="external" size={14} />
               <span className="sr">View transaction</span>
             </Ext>
@@ -431,7 +434,7 @@ export function MyTransfers({ b }: { b: BridgeState }) {
                 <Money v={BigInt(t.amount)} symbol={t.sendSymbol} inline />
               </b>
               <span className="mine-status">{statusLabel(t)}</span>
-              <Ext href={txUrl(t.from, t.originTx)} className="feed-link">
+              <Ext href={txUrl(t.from, t.originTx)} className="feed-link" newTab>
                 <Icon name="external" size={14} />
                 <span className="sr">View origin transaction</span>
               </Ext>
@@ -504,7 +507,7 @@ export function Footer({ minimal }: { minimal?: boolean }) {
           </nav>
         )}
         <div className="foot-badges">
-          <Ext href={LINKS.gullyLabs} className="badge-link">
+          <Ext href={LINKS.gullyLabs} className="badge-link" newTab>
             <img
               src="brand/badges/powered-by-gully-labs-dark.svg"
               srcSet="brand/badges/powered-by-gully-labs-dark.png 1x, brand/badges/powered-by-gully-labs-dark-2x.png 2x, brand/badges/powered-by-gully-labs-dark-3x.png 3x"
