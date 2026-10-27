@@ -35,7 +35,7 @@ describe('GullyChain RPC fallback list', () => {
 
   it('hands wallets the canonical URL first and no pending-DNS host', () => {
     expect(GULLY_WALLET_RPCS[0]).toBe('https://rpc.gullychain.xyz');
-    expect(GULLY_WALLET_RPCS).not.toContain('https://rpc2.gullychain.xyz');
+    expect([...GULLY_WALLET_RPCS]).toEqual([...GULLY_PUBLIC_RPCS]);
   });
 
   it('reads ETH/USD same-origin on a gullychain host, else from gullychain.xyz', () => {
