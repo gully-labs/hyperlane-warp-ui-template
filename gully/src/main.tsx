@@ -10,6 +10,7 @@ import './styles/base.css';
 import './styles/a.css';
 import './styles/b.css';
 import './styles/c.css';
+import './styles/studio-light.css';
 
 // Integrator seam: when @gullylabs/bridge-sdk ships, register it here with setBridgeClient() (src/bridge/bridgeClient.ts).
 

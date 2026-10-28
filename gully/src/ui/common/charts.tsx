@@ -1,12 +1,12 @@
-// Live charts (inline SVG). Palette validated with the dataviz validator on the ink surface #0A1018:
-// Fast #0098D8 / Canonical #2563FF (lightness band, CVD dE 12.7, normal-vision dE 15.3, contrast >= 3:1).
+// Live charts (inline SVG). Studio Light palette on white: Fast #0A86C2 (accent) / Canonical #6366F1 (indigo),
+// both >= 3:1 against #FFFFFF; series are also named in legends and tooltips, never colour alone.
 // Every chart has a hover tooltip, a legend or title naming its series, and a visually hidden table.
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 import { duration } from '../../bridge/format';
 import { Money } from './money';
 
-export const SERIES = { fast: '#0098D8', canonical: '#2563FF' } as const;
+export const SERIES = { fast: '#0A86C2', canonical: '#6366F1' } as const;
 
 /** adds .in once the element scrolls into view (charts animate in on scroll) */
 export function useInView<T extends Element>() {
@@ -182,8 +182,8 @@ export function BackingGauge({ supply, locked, symbol }: { supply: number; locke
         <path d={`M20 92 A${r} ${r} 0 0 1 160 92`} className="gauge-fg" style={{ strokeDasharray: `${len * pct} ${len}` }} stroke="url(#gauge-grad)" />
         <defs>
           <linearGradient id="gauge-grad" x1="0" x2="1">
-            <stop offset="0" stopColor="#00B2FA" />
-            <stop offset="1" stopColor="#46FB04" />
+            <stop offset="0" stopColor="#0A86C2" />
+            <stop offset="1" stopColor="#16A34A" />
           </linearGradient>
         </defs>
         <text x="90" y="80" textAnchor="middle" className="gauge-num">

@@ -560,8 +560,8 @@ export function Footer({ minimal }: { minimal?: boolean }) {
         <div className="foot-badges">
           <Ext href={LINKS.gullyLabs} className="badge-link" newTab>
             <img
-              src="brand/badges/powered-by-gully-labs-dark.svg"
-              srcSet="brand/badges/powered-by-gully-labs-dark.png 1x, brand/badges/powered-by-gully-labs-dark-2x.png 2x, brand/badges/powered-by-gully-labs-dark-3x.png 3x"
+              src="brand/badges/powered-by-gully-labs-light.svg"
+              srcSet="brand/badges/powered-by-gully-labs-light.png 1x, brand/badges/powered-by-gully-labs-light-2x.png 2x, brand/badges/powered-by-gully-labs-light-3x.png 3x"
               width={190}
               height={48}
               alt="Powered by Gully Labs"
