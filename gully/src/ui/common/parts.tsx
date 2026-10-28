@@ -440,6 +440,7 @@ export function MyTransfers({ b }: { b: BridgeState }) {
               </Ext>
             </div>
             <Stepper defs={stepDefsOf(t)} state={recordSteps(t)} compact />
+            <RelayProgress t={t} />
             {t.status === 'claimable' && (
               <Btn icon="key" onClick={() => b.claim(t)} busy={b.busy} disabled={b.busy} className="btn-sm">
                 Claim on Arbitrum Sepolia
@@ -449,6 +450,49 @@ export function MyTransfers({ b }: { b: BridgeState }) {
         ))}
       </ul>
     </section>
+  );
+}
+
+/**
+ * Where a transfer is, with explorer links: origin tx confirmed -> (fast) Hyperlane message id, relaying -> delivered
+ * on the destination (the delivery tx, found from the destination Mailbox by the message id). Pure on the record.
+ */
+export function relayProgress(t: TransferRecord): { key: string; text: string; href?: string; state: 'done' | 'active' | 'error' }[] {
+  const from = CHAINS[t.from].short;
+  const to = CHAINS[t.to].short;
+  const out: { key: string; text: string; href?: string; state: 'done' | 'active' | 'error' }[] = [];
+  if (t.status === 'failed') return [{ key: 'origin', text: `Reverted on ${from}`, href: txUrl(t.from, t.originTx), state: 'error' }];
+  out.push({ key: 'origin', text: `Confirmed on ${from}`, href: txUrl(t.from, t.originTx), state: 'done' });
+  if (t.kind === 'fast' && t.messageId) out.push({ key: 'msg', text: `Message ${short(t.messageId, 6)}`, state: 'done' });
+  if (t.status === 'delivered') {
+    out.push({ key: 'dest', text: `Delivered on ${to}`, href: t.destTx ? txUrl(t.to, t.destTx) : undefined, state: 'done' });
+  } else if (t.status === 'relaying' || t.status === 'sent') {
+    out.push({ key: 'dest', text: t.kind === 'fast' ? `Relaying to ${to}…` : `Waiting for ${to}…`, state: 'active' });
+  }
+  return out;
+}
+
+function RelayProgress({ t }: { t: TransferRecord }) {
+  if (t.kind === 'canonical' && t.direction === 'withdraw') return null;
+  const items = relayProgress(t);
+  return (
+    <ul className="mine-links" aria-live="polite" aria-label="Transfer progress">
+      {items.map((i) => (
+        <li key={i.key} className={`mine-link mine-link-${i.state}`}>
+          <Icon name={i.state === 'done' ? 'check' : i.state === 'error' ? 'x' : 'loader'} size={12} className={i.state === 'active' ? 'spin' : undefined} />
+          {i.href ? (
+            <Ext href={i.href} newTab>
+              {i.text}
+              <Icon name="external" size={12} />
+            </Ext>
+          ) : (
+            <span className={i.key === 'msg' ? 'mono' : undefined} title={i.key === 'msg' ? t.messageId : undefined}>
+              {i.text}
+            </span>
+          )}
+        </li>
+      ))}
+    </ul>
   );
 }
 

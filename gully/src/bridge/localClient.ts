@@ -28,6 +28,7 @@ import {
   messageDeliveredEvent,
   nodeInterfaceAbi,
   outboxAbi,
+  processIdEvent,
   rollupAbi,
   sentTransferEvent,
   warpRouterAbi,
@@ -339,6 +340,28 @@ async function execute(q: Quote, onStep: (u: StepUpdate) => void): Promise<Trans
   return rec;
 }
 
+/** How far back deliveryTx looks: polls run every 5 s, so a fresh delivery is a few blocks old. */
+export const DELIVERY_LOOKBACK = 20_000n;
+
+/**
+ * The destination tx that delivered a Hyperlane message: the destination Mailbox's ProcessId(id) log in the last
+ * DELIVERY_LOOKBACK blocks. (Mailbox.processedAt is no help here: on Arbitrum and Orbit chains block.number is the
+ * parent chain's block, checked 2026-10-27 against message 0x5582…395d.) Undefined when not found; the transfer still
+ * shows as delivered, just without the destination link.
+ */
+export async function deliveryTx(chain: ChainKey, messageId: Hash): Promise<Hash | undefined> {
+  const client = pub(chain);
+  const latest = await client.getBlockNumber();
+  const logs = await client.getLogs({
+    address: CHAINS[chain].mailbox,
+    event: processIdEvent,
+    args: { messageId },
+    fromBlock: latest > DELIVERY_LOOKBACK ? latest - DELIVERY_LOOKBACK : 0n,
+    toBlock: latest,
+  });
+  return logs[0]?.transactionHash ?? undefined;
+}
+
 /** One status poll; returns the updated record. */
 async function track(rec: TransferRecord): Promise<TransferRecord> {
   const upd = (p: Partial<TransferRecord>) => ({ ...rec, ...p, updatedAt: Date.now() });
@@ -350,7 +373,8 @@ async function track(rec: TransferRecord): Promise<TransferRecord> {
       functionName: 'delivered',
       args: [rec.messageId],
     });
-    return ok ? upd({ status: 'delivered' }) : rec;
+    if (!ok) return rec;
+    return upd({ status: 'delivered', destTx: await deliveryTx(rec.to, rec.messageId).catch(() => undefined) });
   }
   if (rec.kind === 'canonical' && rec.direction === 'deposit' && rec.depositTxId) {
     const r = await pub(CHILD).getTransactionReceipt({ hash: rec.depositTxId }).catch(() => undefined);
