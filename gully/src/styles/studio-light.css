@@ -34,8 +34,6 @@ a:hover { color: var(--link-h); }
 .net-pill { font-size: 12px; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--text-2); border-radius: 8px; padding: 5px 10px; }
 .icon-btn { width: 40px; height: 40px; border-radius: 8px; border-color: var(--border-2); color: var(--text); }
 @media (max-width: 900px) { .nav { top: 56px; background: #fff; box-shadow: 0 12px 24px rgba(11, 13, 18, 0.08); } .top-in { padding: 0 16px; } }
-/* gc-switcher 1.4.0 draws a white wordmark (dark kit); it sits on a dark brand chip until 1.5.0 (Studio Light) ships. */
-.gcs { background: #05080d; border-radius: 10px; padding: 2px 8px 2px 6px; }
 
 /* buttons: ink primary, 1px secondary; white on #0A86C2 is only 4.0:1, so filled accent uses #075F8C */
 .btn { min-height: 44px; padding: 0 18px; border-radius: 10px; font-weight: 700; font-size: 15px; }
