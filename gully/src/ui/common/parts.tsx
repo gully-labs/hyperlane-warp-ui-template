@@ -61,22 +61,30 @@ export function Ext({ href, children, className, newTab }: { href: string; child
   );
 }
 
-export function ChainMark({ chain, size = 28 }: { chain: ChainKey; size?: number }) {
-  if (chain === 'gullychaintestnet')
+/** Official chain logos from the Gully chain-logo pack (gully-ops design/chains; sources in its SOURCES.md), in
+ *  public/chains/. Decorative by default (the chain's name is written next to it); pass alt when it stands alone.
+ *  badge: the file with the small amber testnet corner badge, for places that show no "Testnet" text. A file that
+ *  fails to load falls back to the chain's short text mark. */
+const CHAIN_LOGO: Record<ChainKey, { mark: string; badged: string; text: string }> = {
+  gullychaintestnet: { mark: 'chains/gully-chain.svg', badged: 'chains/gully-chain-testnet.svg', text: 'G' },
+  arbitrumsepolia: { mark: 'chains/arbitrum.svg', badged: 'chains/arbitrum-sepolia.svg', text: 'ARB' },
+};
+
+export function ChainMark({ chain, size = 28, alt = '', badge = false }: { chain: ChainKey; size?: number; alt?: string; badge?: boolean }) {
+  const [broken, setBroken] = useState(false);
+  const l = CHAIN_LOGO[chain];
+  if (broken)
     return (
-      <img
-        className="chain-mark"
-        src="brand/icon/gullychain-icon-transparent-512.png"
-        width={size}
-        height={size}
-        alt=""
-      />
+      <span className="chain-mark chain-mark-arb" style={{ width: size, height: size, fontSize: size * 0.36 }} role={alt ? 'img' : undefined} aria-label={alt || undefined} aria-hidden={alt ? undefined : true}>
+        {l.text}
+      </span>
     );
-  return (
-    <span className="chain-mark chain-mark-arb" style={{ width: size, height: size, fontSize: size * 0.36 }} aria-hidden="true">
-      ARB
-    </span>
-  );
+  return <img className="chain-mark" src={badge ? l.badged : l.mark} width={size} height={size} alt={alt} title={alt || undefined} onError={() => setBroken(true)} />;
+}
+
+/** Small "Testnet" badge written after a testnet chain's name. */
+export function TestnetTag() {
+  return <span className="testnet-tag">Testnet</span>;
 }
 
 export function Sparkline({ values, w = 96, h = 28, label }: { values: number[]; w?: number; h?: number; label: string }) {
@@ -143,7 +151,12 @@ export function WalletButton({ compact }: { compact?: boolean }) {
       <button className="wallet-pill" onClick={() => disconnect()} title="Disconnect">
         <span className="wallet-dot" />
         {short(w.address)}
-        {!compact && w.chainId && <small>{CHAINS[w.chainId === 485590 ? 'gullychaintestnet' : 'arbitrumsepolia']?.short}</small>}
+        {!compact && w.chainId && (
+          <small className="wallet-chain">
+            <ChainMark chain={w.chainId === 485590 ? 'gullychaintestnet' : 'arbitrumsepolia'} size={16} badge />
+            {CHAINS[w.chainId === 485590 ? 'gullychaintestnet' : 'arbitrumsepolia']?.short}
+          </small>
+        )}
       </button>
     );
   return (
@@ -237,7 +250,9 @@ export function AmountField({ b, big }: { b: BridgeState; big?: boolean }) {
             </button>
           </>
         ) : (
-          <span className="amount-on">on {CHAINS[b.from].name}</span>
+          <span className="amount-on">
+            on <ChainMark chain={b.from} size={16} /> {CHAINS[b.from].name}
+          </span>
         )}
       </div>
     </div>

@@ -4,7 +4,7 @@ import { CHAINS, LINKS, type ChainKey } from '../../config/chains';
 import { GullySignIn } from '../../gully-id/GullySignIn';
 import type { BridgeState } from '../useBridge';
 import { Icon, type IconName } from './icons';
-import { ChainMark, Ext, WalletButton } from './parts';
+import { ChainMark, Ext, TestnetTag, WalletButton } from './parts';
 import { GullyChainSwitcher } from '../../gc-switcher/GullyChainSwitcher';
 
 const NAV: { label: string; icon: IconName; href: string; ext?: boolean }[] = [
@@ -84,6 +84,7 @@ function ChainBox({ chain, label }: { chain: ChainKey; label: string }) {
       <span>
         <ChainMark chain={chain} size={24} />
         {CHAINS[chain].short}
+        <TestnetTag />
       </span>
     </div>
   );
