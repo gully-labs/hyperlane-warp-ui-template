@@ -5,8 +5,8 @@ import './gc-switcher.js';
 
 export type GullyChainProduct = 'app' | 'bridge' | 'explorer' | 'faucet' | 'safe' | 'verify' | 'sentry' | 'offers' | 'pay' | 'id' | 'docs' | 'dev' | 'status';
 
-export function GullyChainSwitcher({ current, safeLive, className }: { current: GullyChainProduct; safeLive?: boolean; className?: string }) {
-  return createElement('gc-switcher', { current, 'safe-live': safeLive ? '' : undefined, className });
+export function GullyChainSwitcher({ current, safeLive, theme, className }: { current: GullyChainProduct; safeLive?: boolean; theme?: 'light' | 'dark'; className?: string }) {
+  return createElement('gc-switcher', { current, 'safe-live': safeLive ? '' : undefined, theme, className });
 }
 
 export default GullyChainSwitcher;
