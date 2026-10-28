@@ -6,14 +6,14 @@
  * No dependencies, shadow DOM (the host page's CSS cannot restyle it), brand kit v3 tokens.
  *
  * Attributes
- *   current    app | bridge | explorer | faucet | safe | verify | id | docs | dev | status   (highlighted item + trigger label)
+ *   current    app | bridge | explorer | faucet | safe | verify | sentry | id | docs | dev | status   (highlighted item + trigger label)
  *   safe-live  kept for older surfaces; ignored since 1.1.0 (Gully Safe is live at safe.gullychain.xyz)
  */
 (function () {
   'use strict';
   if (typeof window === 'undefined' || !window.customElements || window.customElements.get('gc-switcher')) return;
 
-  var GC_SWITCHER_VERSION = '1.1.0';
+  var GC_SWITCHER_VERSION = '1.2.0';
   var HOME = 'https://gullychain.xyz/';
   // Every entry is a Gully product, so every link opens in the same tab (one product family).
   var PRODUCTS = [
@@ -23,6 +23,7 @@
     { id: 'faucet', label: 'Faucet', desc: 'Free testnet ETH', href: 'https://faucet.gullychain.xyz/', icon: '<path d="M12 3s6 6.4 6 11a6 6 0 0 1-12 0c0-4.6 6-11 6-11Z"/><path d="M9.5 14.5a2.5 2.5 0 0 0 2.5 2.5"/>' },
     { id: 'safe', label: 'Safe', desc: 'Multisig, passkey signers', href: 'https://safe.gullychain.xyz/', icon: '<path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6l-7-3Z"/><circle cx="12" cy="11" r="2"/><path d="M12 13v3"/>' },
     { id: 'verify', label: 'Verify', desc: 'Contract source, Sourcify', href: 'https://verify.gullychain.xyz/', icon: '<path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/>' },
+    { id: 'sentry', label: 'Sentry', desc: 'Free keys, run a watcher', href: 'https://sentry.gullychain.xyz/', icon: '<path d="M19.07 4.93A10 10 0 0 0 6.99 3.34"/><path d="M2.29 9.62A10 10 0 1 0 21.31 8.35"/><path d="M16.24 7.76A6 6 0 1 0 8.23 16.67"/><path d="M17.99 11.66A6 6 0 0 1 15.77 16.67"/><circle cx="12" cy="12" r="2"/><path d="m13.41 10.59 5.66-5.66"/>' },
     { id: 'id', label: 'Gully ID', desc: 'One sign-in for every app', href: 'https://gullyid.xyz/', icon: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>' },
     { id: 'docs', label: 'Docs', desc: 'Guides and reference', href: 'https://docs.gullychain.xyz/', icon: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>' },
     { id: 'dev', label: 'Developers', desc: 'Starters and grants', href: 'https://dev.gullychain.xyz/', icon: '<path d="m8 8-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14"/>' },
@@ -88,6 +89,16 @@
     '@media (prefers-reduced-motion:reduce){.p{animation:none}}'
   ].join('');
 
+  var SHEET = null;
+  function adopt(root) {
+    try {
+      if (!('adoptedStyleSheets' in root) || typeof CSSStyleSheet !== 'function' || !CSSStyleSheet.prototype.replaceSync) return false;
+      if (!SHEET) { SHEET = new CSSStyleSheet(); SHEET.replaceSync(CSS); }
+      root.adoptedStyleSheets = [SHEET];
+      return true;
+    } catch (e) { return false; }
+  }
+
   function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
   function GcSwitcher() { return Reflect.construct(HTMLElement, [], GcSwitcher); }
@@ -122,7 +133,10 @@
       if (soon) return '<li><div class="it soon" aria-disabled="true">' + inner + '</div></li>';
       return '<li><a class="it" href="' + p.href + '"' + (p.id === cur ? ' aria-current="page"' : '') + '>' + inner + '</a></li>';
     }).join('');
-    this.shadowRoot.innerHTML = '<style>' + CSS + '</style>' +
+    // A constructed stylesheet is not inline CSS, so pages with a strict style-src CSP (no 'unsafe-inline') still
+    // style the switcher; browsers without adoptedStyleSheets get the <style> element.
+    var sheet = adopt(this.shadowRoot);
+    this.shadowRoot.innerHTML = (sheet ? '' : '<style>' + CSS + '</style>') +
       '<a class="logo" href="' + HOME + '" aria-label="GullyChain home"><img src="' + ICON + '" width="32" height="32" alt="">' + WORDMARK + '</a>' +
       '<button class="trig" type="button" aria-haspopup="dialog" aria-expanded="false" aria-label="GullyChain products' + (curP ? ', current: ' + esc(curP.label) : '') + '">' +
       '<span class="cl">' + esc(curP ? curP.label : 'Apps') + '</span>' + GRID + '</button>' +
