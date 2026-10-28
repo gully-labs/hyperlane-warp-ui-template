@@ -1,5 +1,5 @@
 // Sign in with Gully: config, types and the lazy SDK loader.
-// Contract: gully-id docs/sign-in-with-gully.md (browser SDK at https://id.gullychain.xyz/sdk.js, window.GullyID).
+// Contract: gully-id docs/sign-in-with-gully.md (browser SDK at https://gullyid.xyz/sdk.js, window.GullyID).
 //
 // Identity only. Nothing here touches the bridge wallet: transfers are still signed by the wallet the user
 // connects with the Connect button, and a signed-in profile never auto-connects anything.
@@ -48,7 +48,7 @@ export interface GullyIDGlobal {
 
 export type GullyIdConfig = { clientId: string; issuer: string };
 
-export const DEFAULT_ISSUER = 'https://id.gullychain.xyz';
+export const DEFAULT_ISSUER = 'https://gullyid.xyz';
 
 /** Feature flag: no client id = no button, and the SDK is never loaded. */
 export function gullyIdConfig(env: Record<string, unknown>): GullyIdConfig | null {

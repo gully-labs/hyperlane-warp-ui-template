@@ -71,7 +71,7 @@ describe('loadGullyIdSdk (fail soft)', () => {
     expect(a).toBe(sdk);
     expect(b).toBe(sdk);
     expect(scripts).toHaveLength(1);
-    expect(scripts[0].src).toBe('https://id.gullychain.xyz/sdk.js');
+    expect(scripts[0].src).toBe('https://gullyid.xyz/sdk.js');
   });
   it('resolves null when the script errors', async () => {
     expect(await loadGullyIdSdk(DEFAULT_ISSUER, fakeEnv(undefined, 'error').env)).toBeNull();
