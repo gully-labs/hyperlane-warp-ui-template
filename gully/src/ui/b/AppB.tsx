@@ -7,7 +7,7 @@ import type { ActivityItem } from '../../bridge/types';
 import { Icon } from '../common/icons';
 import { Money, UsdLine, UsdNote } from '../common/money';
 import { asEth, ethN } from '../../bridge/usd';
-import { ActionButton, ActivityList, AmountField, ChainMark, Footer, MyTransfers, QuoteDetails, Stepper } from '../common/parts';
+import { ActionButton, ActivityList, AmountField, ChainMark, Footer, LegacyNotice, MyTransfers, QuoteDetails, Stepper } from '../common/parts';
 import { Header } from '../common/shell';
 import { useActivity, useBridge, useHeads, type BridgeState, type UrlOptions } from '../useBridge';
 
@@ -198,6 +198,7 @@ export function SwapCard({ b, title = 'Bridge' }: { b: BridgeState; title?: stri
           {b.quote ? `Arrives ${duration(b.quote.etaSeconds)}${b.kind === 'canonical' && b.direction === 'withdraw' ? ', then claim' : ''}` : 'Getting a quote…'}
         </small>
       </div>
+      <LegacyNotice b={b} />
       <QuoteDetails b={b} />
       {b.stepDefs.length > 0 && <Stepper defs={b.stepDefs} state={b.steps} compact />}
       <ActionButton b={b} />

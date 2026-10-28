@@ -15,7 +15,7 @@ import {
 } from 'viem';
 
 import { CANONICAL, CHAINS, CHILD, PARENT, type ChainKey } from '../config/chains';
-import { fastRoute, FAST_ROUTES } from '../config/routes';
+import { fastRoute, FAST_ROUTES, LEGACY_ROUTES, routeFor } from '../config/routes';
 import {
   arbSysAbi,
   assertionConfirmedEvent,
@@ -85,7 +85,7 @@ async function quote(req: QuoteRequest): Promise<Quote> {
   const { from, to } = ends(req.direction);
   const notes: string[] = [];
   if (req.kind === 'fast') {
-    const r = fastRoute(req.fastRouteId);
+    const r = routeFor(req.direction, req.fastRouteId);
     const t = r.tokens[from];
     const dest = r.tokens[to];
     const recipient = pad(req.recipient || req.sender || ZERO);
@@ -261,7 +261,7 @@ async function execute(q: Quote, onStep: (u: StepUpdate) => void): Promise<Trans
   const client = pub(q.from);
   let hash: Hash;
   if (req.kind === 'fast') {
-    const t = fastRoute(req.fastRouteId).tokens[q.from];
+    const t = routeFor(req.direction, req.fastRouteId).tokens[q.from];
     if (q.needsApproval && t.collateralAddress) {
       const allowance = await client.readContract({
         address: t.collateralAddress,
@@ -473,25 +473,37 @@ async function withdrawalsOf(address: Address): Promise<TransferRecord[]> {
 export interface Balances {
   parentEth?: bigint;
   childEth?: bigint;
-  /** the Fast route's token on GullyChain (gETH / hypETH) */
+  /** what the Fast route sends from GullyChain: native ETH (the default route) or the route's token (gETH / hypETH) */
   fastToken?: bigint;
+  /** balances of retired routes' GullyChain tokens (gETH, hypETH) by route id, so the UI can offer a redeem */
+  legacy?: Record<string, bigint>;
 }
+
+const tokenBalance = (g: { tokenType: string; address: Address; collateralAddress: Address | null }, address: Address) =>
+  pub(CHILD)
+    .readContract({
+      address: g.tokenType === 'collateral' ? g.collateralAddress! : g.address,
+      abi: erc20Abi,
+      functionName: 'balanceOf',
+      args: [address],
+    })
+    .catch(() => undefined);
 
 async function balances(address: Address, routeId?: string): Promise<Balances> {
   const g = fastRoute(routeId).tokens[CHILD];
-  const [parentEth, childEth, fastToken] = await Promise.all([
+  const [parentEth, childEth, token, legacyList] = await Promise.all([
     pub(PARENT).getBalance({ address }).catch(() => undefined),
     pub(CHILD).getBalance({ address }).catch(() => undefined),
-    pub(CHILD)
-      .readContract({
-        address: g.tokenType === 'collateral' ? g.collateralAddress! : g.address,
-        abi: erc20Abi,
-        functionName: 'balanceOf',
-        args: [address],
-      })
-      .catch(() => undefined),
+    g.tokenType === 'native' ? Promise.resolve(undefined) : tokenBalance(g, address),
+    Promise.all(LEGACY_ROUTES.map((r) => tokenBalance(r.tokens[CHILD], address))),
   ]);
-  return { parentEth, childEth, fastToken };
+  const legacy: Record<string, bigint> = {};
+  LEGACY_ROUTES.forEach((r, i) => {
+    if (legacyList[i] !== undefined) legacy[r.id] = legacyList[i]!;
+  });
+  // a native GullyChain router sends the wallet's own gas ETH
+  const fastToken = g.tokenType === 'native' ? childEth : token;
+  return { parentEth, childEth, fastToken, legacy };
 }
 
 const blockTimes = new Map<string, number>();

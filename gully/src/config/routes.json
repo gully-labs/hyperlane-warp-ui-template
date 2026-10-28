@@ -1,7 +1,31 @@
 {
   "generatedFrom": "gully-ops l3/hyperlane/registry/deployments/warp_routes",
-  "defaultRouteId": "GETH/arbitrumsepolia-gullychaintestnet",
+  "defaultRouteId": "ETH/arbitrumsepolia-gullychaintestnet-native",
   "routes": [
+    {
+      "id": "ETH/arbitrumsepolia-gullychaintestnet-native",
+      "symbol": "ETH",
+      "tokens": {
+        "gullychaintestnet": {
+          "address": "0xB1943191df824138bd0784C60077c6610F380810",
+          "standard": "EvmHypNative",
+          "tokenType": "native",
+          "symbol": "ETH",
+          "name": "Ether",
+          "decimals": 18,
+          "collateralAddress": null
+        },
+        "arbitrumsepolia": {
+          "address": "0x9E40F1702977A0a48Fa275522Ba6877E209DE631",
+          "standard": "EvmHypNative",
+          "tokenType": "native",
+          "symbol": "ETH",
+          "name": "Ether",
+          "decimals": 18,
+          "collateralAddress": null
+        }
+      }
+    },
     {
       "id": "GETH/arbitrumsepolia-gullychaintestnet",
       "symbol": "GETH",
@@ -24,7 +48,8 @@
           "decimals": 18,
           "collateralAddress": null
         }
-      }
+      },
+      "legacy": true
     },
     {
       "id": "ETH/arbitrumsepolia-gullychaintestnet",
@@ -48,7 +73,8 @@
           "decimals": 18,
           "collateralAddress": null
         }
-      }
+      },
+      "legacy": true
     }
   ]
 }

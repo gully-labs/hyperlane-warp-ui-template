@@ -95,7 +95,9 @@ export function Analytics() {
     const v = delivery.filter((d) => d.kind === k);
     return v.length ? v.reduce((a, d) => a + d.s, 0) / v.length : undefined;
   };
-  const b = stats.backing[0];
+  // the default native route shows its liquidity; a retired synthetic route (gETH) shows its backing while anyone holds it
+  const liq = stats.backing.find((x) => x.kind === 'native' && !x.legacy);
+  const b = stats.backing.find((x) => x.kind === 'synthetic' && x.supply > 0n) || (liq ? undefined : stats.backing[0]);
   const lastAge = stats.lastDeliveryAt ? (Date.now() - stats.lastDeliveryAt) / 1000 : undefined;
   const stuck = stats.pendingFast > 0 && stats.oldestPendingFastAt && Date.now() - stats.oldestPendingFastAt > 10 * 60_000;
   const relayer = stuck ? { cls: 'warn', icon: 'alert' as const, label: 'Delayed' } : { cls: 'ok', icon: 'check' as const, label: 'Healthy' };
@@ -133,7 +135,18 @@ export function Analytics() {
           <DeliveryChart points={delivery} />
           <p className="fine">Canonical deposits are credited in the GullyChain block that reads them; that block carries the deposit's own timestamp, so their delivery time is not measurable on chain and is not plotted.</p>
         </ChartCard>
-        <ChartCard title={`${b?.symbol || 'gETH'} backing`} sub="ETH locked on Arbitrum Sepolia vs supply on GullyChain">
+        {liq && (
+          <ChartCard title="Fast lane liquidity" sub="native ETH each router can pay out">
+            <dl className="kv">
+              <div><dt>GullyChain router (pays deposits)</dt><dd><Money v={liq.supply} inline /></dd></div>
+              <div><dt>Arbitrum Sepolia router (pays withdrawals)</dt><dd><Money v={liq.locked} inline /></dd></div>
+            </dl>
+            <Legend items={[{ label: 'Arbitrum Sepolia router', color: SERIES.canonical }, { label: 'GullyChain router (dashed)', color: SERIES.fast }]} />
+            <BackingLines series={liq.series} symbol="ETH liquidity" />
+          </ChartCard>
+        )}
+        {(b || !liq) && (
+        <ChartCard title={`${b?.symbol || 'gETH'} backing${b?.legacy ? ' (retired route)' : ''}`} sub="ETH locked on Arbitrum Sepolia vs supply on GullyChain">
           {b ? (
             <>
               <BackingGauge supply={Number(b.supply) / 1e18} locked={Number(b.locked) / 1e18} symbol={b.symbol} />
@@ -148,6 +161,7 @@ export function Analytics() {
             <Empty>No Fast route configured.</Empty>
           )}
         </ChartCard>
+        )}
         <ChartCard title="Relayer health" sub="Fast lane deliveries">
           <div className={`health ${relayer.cls}`}>
             <Icon name={relayer.icon} size={20} />

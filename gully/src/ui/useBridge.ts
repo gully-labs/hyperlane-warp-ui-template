@@ -1,9 +1,9 @@
 // All bridge state for both design directions. The shells (A, B) only render it.
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { isAddress, type Address } from 'viem';
+import { formatEther, isAddress, type Address } from 'viem';
 
 import { CHILD, PARENT, type ChainKey } from '../config/chains';
-import { DEFAULT_FAST_ROUTE_ID, fastRoute, FAST_ROUTES } from '../config/routes';
+import { DEFAULT_FAST_ROUTE_ID, FAST_ROUTES, LEGACY_ROUTES, routeFor } from '../config/routes';
 import { getBridgeClient, onBridgeClientChange, type Balances } from '../bridge/bridgeClient';
 import { pub } from '../bridge/clients';
 import { parseAmount } from '../bridge/format';
@@ -163,7 +163,9 @@ export function useBridge(url: UrlOptions) {
   const [activeId, setActiveId] = useState<string>();
 
   const amount = parseAmount(amountText);
-  const route = fastRoute(fastRouteId);
+  // deposits always go through the default (native ETH) route; a retired route (gETH, hypETH) is only used to redeem
+  const route = routeFor(direction, fastRouteId);
+  const routeId = route.id;
   const { from, to } = ends(direction);
 
   // balances
@@ -175,7 +177,7 @@ export function useBridge(url: UrlOptions) {
     let stop = false;
     const tick = () =>
       getBridgeClient()
-        .balances(wallet.address!, fastRouteId)
+        .balances(wallet.address!, routeId)
         .then((b) => !stop && setBalances(b))
         .catch(() => undefined);
     tick();
@@ -184,7 +186,20 @@ export function useBridge(url: UrlOptions) {
       stop = true;
       clearInterval(id);
     };
-  }, [wallet.address, fastRouteId]);
+  }, [wallet.address, routeId]);
+
+  // retired-route tokens the wallet still holds: the UI offers to redeem them for ETH on Arbitrum Sepolia
+  const legacyHoldings = LEGACY_ROUTES.map((r) => ({
+    routeId: r.id,
+    symbol: r.tokens[CHILD].symbol,
+    name: r.tokens[CHILD].name,
+    balance: balances.legacy?.[r.id] ?? 0n,
+  })).filter((h) => h.balance > 0n);
+  // back to the default route once a redeem has emptied the retired token
+  useEffect(() => {
+    if (route.legacy && balances.legacy && (balances.legacy[route.id] ?? 0n) === 0n && !busy) setFastRouteId(DEFAULT_FAST_ROUTE_ID);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [route.id, route.legacy, balances.legacy]);
 
   const pick = useMemo(
     () =>
@@ -206,7 +221,7 @@ export function useBridge(url: UrlOptions) {
     setQuoting(true);
     const t = setTimeout(async () => {
       const c = getBridgeClient();
-      const req = { direction, amount: amt, sender: wallet.address, ref: url.ref, fastRouteId };
+      const req = { direction, amount: amt, sender: wallet.address, ref: url.ref, fastRouteId: routeId };
       const [f, k] = await Promise.allSettled([c.quote({ ...req, kind: 'fast' }), c.quote({ ...req, kind: 'canonical' })]);
       if (stop) return;
       setQuotes({
@@ -224,7 +239,7 @@ export function useBridge(url: UrlOptions) {
       stop = true;
       clearTimeout(t);
     };
-  }, [direction, amount, wallet.address, url.ref, fastRouteId]);
+  }, [direction, amount, wallet.address, url.ref, routeId]);
 
   const quote = quotes[kind];
 
@@ -276,7 +291,13 @@ export function useBridge(url: UrlOptions) {
   else if (!quote) blocker = quoting ? 'Getting a quote' : 'No quote';
   else if (wallet.address && balanceFrom !== undefined && amount > balanceFrom) blocker = `Insufficient ${quote.sendSymbol} balance`;
   else if (!quote.available) blocker = quote.reason || 'Route unavailable';
-  else if (wallet.address && balanceFrom !== undefined && quote.value > 0n && direction === 'deposit' && balanceFrom < quote.value)
+  else if (
+    wallet.address &&
+    balanceFrom !== undefined &&
+    quote.value > 0n &&
+    (direction === 'deposit' || (kind === 'fast' && route.tokens[CHILD].tokenType === 'native')) &&
+    balanceFrom < quote.value
+  )
     blocker = 'Insufficient balance';
   else if (wallet.address && balanceFrom !== undefined && amount > balanceFrom) blocker = 'Insufficient balance';
 
@@ -329,10 +350,12 @@ export function useBridge(url: UrlOptions) {
     direction,
     setDirection: (d: Direction) => {
       setDirection(d);
+      if (d === 'deposit') setFastRouteId(DEFAULT_FAST_ROUTE_ID);
       setSteps({});
     },
     flip: () => {
       setDirection((d) => (d === 'deposit' ? 'withdraw' : 'deposit'));
+      setFastRouteId(DEFAULT_FAST_ROUTE_ID);
       setSteps({});
     },
     from,
@@ -346,8 +369,23 @@ export function useBridge(url: UrlOptions) {
     setKind: (k: RouteKind | undefined) => setManualKind(k),
     route,
     routes: FAST_ROUTES,
-    fastRouteId,
+    fastRouteId: routeId,
     setFastRouteId,
+    legacyHoldings,
+    /** switch the card to redeeming a retired route's token (GullyChain -> Arbitrum Sepolia, Fast lane, full balance) */
+    redeemLegacy: (id: string) => {
+      const h = legacyHoldings.find((x) => x.routeId === id);
+      if (!h) return;
+      setDirection('withdraw');
+      setFastRouteId(id);
+      setManualKind('fast');
+      setAmountText(formatEther(h.balance));
+      setSteps({});
+    },
+    useDefaultRoute: () => {
+      setFastRouteId(DEFAULT_FAST_ROUTE_ID);
+      setSteps({});
+    },
     quotes,
     quote,
     quoting,

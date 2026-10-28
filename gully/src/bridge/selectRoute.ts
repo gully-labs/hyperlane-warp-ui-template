@@ -3,7 +3,7 @@ import type { Direction, RouteKind } from './types';
 export interface RouteContext {
   direction: Direction;
   amount: bigint | null;
-  /** balance of the fast-route token on GullyChain (gETH / hypETH); undefined when no wallet */
+  /** what the fast route sends from GullyChain: gas ETH (native route) or gETH / hypETH (retired routes); undefined when no wallet */
   fastTokenBalance?: bigint;
   /** native ETH the user holds on GullyChain */
   childEthBalance?: bigint;
@@ -21,8 +21,9 @@ export interface RoutePick {
  * Picks the recommended lane. Pure: unit-tested in selectRoute.test.ts.
  * - Fast is preferred whenever it can carry the amount: minutes in both directions.
  * - Deposits fall back to Canonical when the fast destination lacks liquidity.
- * - Withdrawals use Fast when the user holds enough of the fast token; ETH held as gas on GullyChain can only
- *   leave through the Canonical lane (challenge period, then a claim on Arbitrum Sepolia).
+ * - Withdrawals use Fast when the user holds enough of what the route sends: gas ETH on the native route (the default
+ *   since 2026-10-28, so fastTokenBalance = the GullyChain ETH balance), gETH / hypETH when redeeming a retired route.
+ *   Otherwise (or above the Fast lane's liquidity) they fall back to the Canonical lane (challenge period, then a claim).
  */
 export function pickRoute(c: RouteContext): RoutePick {
   if (!c.fastAvailable) return { kind: 'canonical', reason: 'Fast lane unavailable right now' };

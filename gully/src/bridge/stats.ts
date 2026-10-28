@@ -34,7 +34,10 @@ export interface BackingPoint {
 export interface Backing {
   routeId: string;
   symbol: string;
-  supply: bigint; // synthetic supply on GullyChain (totalSupply)
+  /** native: HypNative on GullyChain too (liquidity on both sides); synthetic: a minted token on GullyChain */
+  kind: 'native' | 'synthetic';
+  legacy: boolean;
+  supply: bigint; // synthetic: supply on GullyChain (totalSupply); native: ETH held by the GullyChain router
   locked: bigint; // ETH held by the Arbitrum Sepolia router
   series: BackingPoint[];
 }
@@ -185,15 +188,18 @@ export async function loadStats(): Promise<BridgeStats> {
     FAST_ROUTES.map(async (r) => {
       const a = r.tokens.arbitrumsepolia;
       const g = r.tokens.gullychaintestnet;
+      const gNative = g.tokenType === 'native';
       const [supply, locked] = await Promise.all([
         g.tokenType === 'synthetic'
           ? pub(CHILD).readContract({ address: g.address, abi: warpRouterAbi, functionName: 'totalSupply' })
-          : Promise.resolve(0n),
+          : gNative
+            ? pub(CHILD).getBalance({ address: g.address })
+            : Promise.resolve(0n),
         a.tokenType === 'native' ? pub(PARENT).getBalance({ address: a.address }) : Promise.resolve(0n),
       ]);
       const ev = [
         ...warp[0].filter((l) => l.address.toLowerCase() === a.address.toLowerCase()).map((l) => ({ t: timeOf(PARENT, l.blockNumber) || 0, dl: l.eventName === 'SentTransferRemote' ? l.args.amount! : -l.args.amount!, ds: 0n })),
-        ...warp[1].filter((l) => l.address.toLowerCase() === g.address.toLowerCase()).map((l) => ({ t: timeOf(CHILD, l.blockNumber) || 0, dl: 0n, ds: l.eventName === 'ReceivedTransferRemote' ? l.args.amount! : -l.args.amount! })),
+        ...warp[1].filter((l) => l.address.toLowerCase() === g.address.toLowerCase()).map((l) => ({ t: timeOf(CHILD, l.blockNumber) || 0, dl: 0n, ds: (l.eventName === 'ReceivedTransferRemote') !== gNative ? l.args.amount! : -l.args.amount! })),
       ].sort((x, y) => x.t - y.t);
       let s = 0n;
       let k = 0n;
@@ -203,7 +209,16 @@ export async function loadStats(): Promise<BridgeStats> {
         return { t: e.t, supply: Number(s) / 1e18, locked: Number(k) / 1e18 };
       });
       series.push({ t: now, supply: Number(supply) / 1e18, locked: Number(locked) / 1e18 });
-      return { routeId: r.id, symbol: g.symbol, supply, locked, series };
+      if (gNative) {
+        // native routers also hold their liquidity seeds (plain transfers, no event): anchor the history on today's balances
+        const ds = Number(supply) / 1e18 - Number(s) / 1e18;
+        const dl = Number(locked) / 1e18 - Number(k) / 1e18;
+        for (let i = 0; i < series.length - 1; i++) {
+          series[i].supply += ds;
+          series[i].locked += dl;
+        }
+      }
+      return { routeId: r.id, symbol: g.symbol, kind: gNative ? 'native' : 'synthetic', legacy: !!r.legacy, supply, locked, series };
     }),
   );
 
