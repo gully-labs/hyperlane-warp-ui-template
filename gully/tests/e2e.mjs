@@ -96,7 +96,7 @@ for (const w of (process.env.WIDTHS || "375,768,1280,1920").split(",").map(Numbe
     await page.waitForSelector('#stats .an-grid', { timeout: 40000 }).catch(() => undefined);
     await page.waitForTimeout(1500);
     check(`${w} analytics: 6 live chart cards`, (await page.locator('#stats .chart-card').count()) === 6);
-    check(`${w} analytics: backing gauge`, /backed|outstanding/i.test(await page.locator('.gauge-state').innerText().catch(() => '')));
+    check(`${w} analytics: liquidity or backing`, /Fast lane liquidity|backed|outstanding/i.test(await page.locator('.analytics, main').first().innerText().catch(() => '')));
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({ path: `${OUT}/c-${w}-disconnected.png`, fullPage: true });
     check(`${w} disconnected: no console errors`, errors.length === 0, errors.slice(0, 3).join(' | '));

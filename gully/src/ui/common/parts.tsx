@@ -291,6 +291,42 @@ export function RouteOptions({ b }: { b: BridgeState }) {
   );
 }
 
+/**
+ * Retired Fast routes (gETH, hypETH): never offered for deposits. A wallet that still holds one of their tokens gets a
+ * one-click redeem (GullyChain -> Arbitrum Sepolia on that route), so nothing bridged earlier is ever stranded.
+ */
+export function LegacyNotice({ b }: { b: BridgeState }) {
+  if (b.route.legacy)
+    return (
+      <div className="note legacy-note" role="status">
+        <Icon name="info" size={16} />
+        <span>
+          Redeeming {b.route.tokens.gullychaintestnet.symbol} ({b.route.tokens.gullychaintestnet.name}, a retired route) for ETH on Arbitrum
+          Sepolia.{' '}
+          <button className="link-btn" onClick={b.useDefaultRoute}>
+            Bridge ETH instead
+          </button>
+        </span>
+      </div>
+    );
+  if (!b.legacyHoldings.length) return null;
+  return (
+    <div className="note legacy-note" role="status">
+      <Icon name="info" size={16} />
+      <span>
+        {b.legacyHoldings.map((h) => (
+          <span key={h.routeId}>
+            You hold {ethN(Number(h.balance) / 1e18)} {h.symbol} from a retired Fast route.{' '}
+            <button className="link-btn" onClick={() => b.redeemLegacy(h.routeId)}>
+              Redeem for ETH
+            </button>{' '}
+          </span>
+        ))}
+      </span>
+    </div>
+  );
+}
+
 export function QuoteDetails({ b }: { b: BridgeState }) {
   const q = b.quote;
   if (b.quoteError) return <p className="err" role="alert">{b.quoteError}</p>;
