@@ -6,11 +6,12 @@ import { AppB } from './ui/b/AppB';
 import { AppC } from './ui/c/AppC';
 import { Toaster } from './ui/common/toasts';
 import { readUrl } from './ui/useBridge';
+import './styles/night/tokens.css';
 import './styles/base.css';
 import './styles/a.css';
 import './styles/b.css';
 import './styles/c.css';
-import './styles/studio-light.css';
+import './styles/night.css';
 
 // Integrator seam: when @gullylabs/bridge-sdk ships, register it here with setBridgeClient() (src/bridge/bridgeClient.ts).
 
