@@ -15,8 +15,9 @@ cp(join(kit, 'icon/android-chrome-192.png'), 'android-chrome-192.png');
 cp(join(kit, 'icon/gullychain-icon-dark-512.png'), 'android-chrome-512.png');
 cp(join(kit, 'icon/gullychain-icon-transparent-512.png'), 'brand/icon/gullychain-icon-transparent-512.png');
 cp(join(kit, 'og/og-image-1200x630.png'), 'og-image.png');
-for (const f of ['gullychain-logo-transparent.png', 'gullychain-wordmark-for-dark-bg.svg']) cp(join(kit, 'logo', f), `brand/logo/${f}`);
-for (const f of readdirSync(join(kit, 'badges')).filter((f) => f.includes('-dark'))) cp(join(kit, 'badges', f), `brand/badges/${f}`);
+for (const f of ['gullychain-logo-transparent.png', 'gullychain-wordmark-for-dark-bg.svg', 'gullychain-wordmark-for-light-bg.svg']) cp(join(kit, 'logo', f), `brand/logo/${f}`);
+// Studio Light (white) surfaces: the light badges; the footer lockup is the dark tile android-chrome-512.png + the light-bg wordmark SVG
+for (const f of readdirSync(join(kit, 'badges')).filter((f) => f.includes('-dark') || f.startsWith('gullychain-powered-by-light'))) cp(join(kit, 'badges', f), `brand/badges/${f}`);
 for (const f of readdirSync(join(labs, 'badges')).filter((f) => f.startsWith('powered-by-gully-labs-dark'))) cp(join(labs, 'badges', f), `brand/badges/${f}`);
 cp(join(kit, 'mascots/gullychain-mascot-trader.png'), 'brand/mascots/gullychain-mascot-trader.png');
 

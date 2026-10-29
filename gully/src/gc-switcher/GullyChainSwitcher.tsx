@@ -5,8 +5,9 @@ import './gc-switcher.js';
 
 export type GullyChainProduct = 'app' | 'bridge' | 'explorer' | 'faucet' | 'safe' | 'verify' | 'sentry' | 'offers' | 'pay' | 'id' | 'docs' | 'dev' | 'status';
 
-export function GullyChainSwitcher({ current, safeLive, theme, className }: { current: GullyChainProduct; safeLive?: boolean; theme?: 'light' | 'dark'; className?: string }) {
-  return createElement('gc-switcher', { current, 'safe-live': safeLive ? '' : undefined, theme, className });
+/** logo="off": only the product-name trigger, for headers that already show the brand-kit logo. */
+export function GullyChainSwitcher({ current, safeLive, theme, logo, className }: { current: GullyChainProduct; safeLive?: boolean; theme?: 'light' | 'dark'; logo?: 'on' | 'off'; className?: string }) {
+  return createElement('gc-switcher', { current, 'safe-live': safeLive ? '' : undefined, theme, logo, className });
 }
 
 export default GullyChainSwitcher;
