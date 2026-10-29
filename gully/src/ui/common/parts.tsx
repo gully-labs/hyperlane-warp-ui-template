@@ -556,6 +556,9 @@ export function Footer({ minimal }: { minimal?: boolean }) {
             <Ext href={LINKS.explorer}>Explorer</Ext>
             <Ext href={LINKS.faucet}>Faucet</Ext>
             <Ext href={LINKS.docs}>Docs</Ext>
+            <Ext href={LINKS.dev}>Developers</Ext>
+            <Ext href={LINKS.chainEcosystem}>Ecosystem</Ext>
+            <Ext href={LINKS.status}>Status</Ext>
             <Ext href={LINKS.ecosystem} newTab>
               Gully ecosystem →
             </Ext>
