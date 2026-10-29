@@ -80,7 +80,7 @@ export const CANONICAL = {
 
 export const LINKS = {
   explorer: 'https://testnet-explorer.gullychain.xyz',
-  faucet: 'https://faucet.gullychain.xyz',
+  faucet: 'https://testnet-faucet.gullychain.xyz',
   docs: 'https://docs.gullychain.xyz/bridging/',
   chain: 'https://gullychain.xyz',
   gullyLabs: 'https://gullylabs.xyz', // the Powered by Gully Labs badge only
