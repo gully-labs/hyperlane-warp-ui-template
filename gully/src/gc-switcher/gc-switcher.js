@@ -8,7 +8,8 @@
  * official brand-kit files embedded byte for byte (dark tile icon + light-bg / dark-bg wordmark SVG), never redrawn;
  * logo="off" hides it where the page already shows the kit logo (no double mark). 1.6.0: Gully Chain products only
  * (owner rule 2026-10-29): Pay and Gully ID left the grid; the other Gully products are listed once, on
- * docs.gullychain.xyz/ecosystem/.
+ * docs.gullychain.xyz/ecosystem/. 1.6.1: testnet hosts (2026-10-29): App, Faucet (and Bridge, Explorer) link to the
+ * testnet-* subdomains; app/bridge.gullychain.xyz become mainnet on cutover day.
  *
  * Attributes
  *   current    app | bridge | explorer | faucet | safe | verify | sentry | offers | docs | dev | status   (highlighted item + trigger label;
@@ -21,14 +22,14 @@
   'use strict';
   if (typeof window === 'undefined' || !window.customElements || window.customElements.get('gc-switcher')) return;
 
-  var GC_SWITCHER_VERSION = '1.6.0';
+  var GC_SWITCHER_VERSION = '1.6.1';
   var HOME = 'https://gullychain.xyz/';
   // Gully Chain products and services only (1.6.0): every link opens in the same tab. Other Gully products: docs ecosystem page.
   var PRODUCTS = [
-    { id: 'app', label: 'App', desc: 'Social trading app', href: 'https://app.gullychain.xyz/', icon: '<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/>' },
+    { id: 'app', label: 'App', desc: 'Social trading app', href: 'https://testnet-app.gullychain.xyz/', icon: '<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/>' },
     { id: 'bridge', label: 'Bridge', desc: 'Move ETH in and out', href: 'https://testnet-bridge.gullychain.xyz/', icon: '<path d="M3 18h18M5 18v-5a7 7 0 0 1 14 0v5M9 18v-4M15 18v-4"/>' },
     { id: 'explorer', label: 'Explorer', desc: 'Blocks, txs, tokens', href: 'https://testnet-explorer.gullychain.xyz/', icon: '<circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5M8.5 11h5"/>' },
-    { id: 'faucet', label: 'Faucet', desc: 'Free testnet ETH', href: 'https://faucet.gullychain.xyz/', icon: '<path d="M12 3s6 6.4 6 11a6 6 0 0 1-12 0c0-4.6 6-11 6-11Z"/><path d="M9.5 14.5a2.5 2.5 0 0 0 2.5 2.5"/>' },
+    { id: 'faucet', label: 'Faucet', desc: 'Free testnet ETH', href: 'https://testnet-faucet.gullychain.xyz/', icon: '<path d="M12 3s6 6.4 6 11a6 6 0 0 1-12 0c0-4.6 6-11 6-11Z"/><path d="M9.5 14.5a2.5 2.5 0 0 0 2.5 2.5"/>' },
     { id: 'safe', label: 'Safe', desc: 'Multisig, passkey signers', href: 'https://safe.gullychain.xyz/', icon: '<path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6l-7-3Z"/><circle cx="12" cy="11" r="2"/><path d="M12 13v3"/>' },
     { id: 'verify', label: 'Verify', desc: 'Contract source, Sourcify', href: 'https://verify.gullychain.xyz/', icon: '<path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/>' },
     { id: 'sentry', label: 'Sentry', desc: 'Free keys, run a watcher', href: 'https://sentry.gullychain.xyz/', icon: '<path d="M19.07 4.93A10 10 0 0 0 6.99 3.34"/><path d="M2.29 9.62A10 10 0 1 0 21.31 8.35"/><path d="M16.24 7.76A6 6 0 1 0 8.23 16.67"/><path d="M17.99 11.66A6 6 0 0 1 15.77 16.67"/><circle cx="12" cy="12" r="2"/><path d="m13.41 10.59 5.66-5.66"/>' },
