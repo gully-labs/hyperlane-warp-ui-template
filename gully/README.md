@@ -27,6 +27,7 @@ template, and the template stays untouched for future upstream merges.
 | `src/bridge/localClient.ts` | built-in client: quotes (`quoteTransferRemote`), sends, tracking (Hyperlane `Mailbox.delivered`, the computed deposit tx id, the outbox leaf), claims (`constructOutboxProof` + `Outbox.executeTransaction`, BoLD rollup) |
 | `src/bridge/stats.ts` | live analytics from chain events only. Arbitrum Sepolia's public RPC allows only 100k blocks per `eth_getLogs` when a filter position has several values, so those queries go out in 90k-block windows. |
 | `src/ui/c/AppC.tsx` | **the shipped design** (owner pick, "C · Hybrid"). `src/ui/a` and `src/ui/b` are the two earlier directions, kept for the picker. |
+| `src/styles/night/`, `src/styles/night.css` | **Gully Chain Night**, the shared black design of the Gully Chain builder surfaces (owner, 2026-10-29). `night/` is vendored byte for byte from gully-ops `sites/_shared/gullychain-night` by `npm run night` (`scripts/sync-gullychain-night.mjs`, locked in `night.lock.json`, checked by `tests/night.test.ts`); the Exo 2 fonts go to `public/assets/fonts/`. `base.css` maps the kit v3 names to `--gn-*`; `night.css` (loaded last) is the finish. Never put a colour literal where a `--gn-*` token exists, and never edit `night/` here. Header: kit `logo/gullychain-logo-transparent.png` at 36 px; footer: `logo/gullychain-wordmark-for-dark-bg.svg`; `-dark` badges; the product switcher with `theme="dark"`. |
 | `deploy/Caddyfile.bridge` | Caddy block for gully-l3 (static files, SPA fallback, CSP, rollback to the old container). `connect-src` allows every GullyChain RPC of the fallback list, `gullychain.xyz` (ETH/USD off a gullychain host) and `api.redstone.finance`. |
 | `src/gc-switcher/` | the GullyChain product switcher, a byte-identical copy of gully-ops `sites/_shared/gc-switcher` (spec in its README). Do not edit it here. |
 | `src/config/rpc.ts`, `src/bridge/clients.ts` | GullyChain RPC fallback: viem `fallback()` (rank off, 8 s per URL) over same-origin `/rpc` (on a gullychain.xyz host), `testnet-rpc.gullychain.xyz`, `rpc.gullyrpc.xyz/gullychain/evm/485590`, `rpc2.gullychain.xyz`. `VITE_GULLY_RPC` (comma-separated) goes in front. Wallets get the same list (testnet-rpc first). Never `rpc.gullychain.xyz` or `bridge.gullychain.xyz` as testnet endpoints: they become mainnet on cutover day. |
@@ -55,7 +56,8 @@ VITE_GULLY_ID_CLIENT_ID=gully-bridge node scripts/build-staging.mjs <out>
 
 ```sh
 npm install
-npm run brand            # copy the GullyChain kit v3 + Gully Labs badge into public/ (byte for byte)
+npm run brand            # copy the GullyChain kit v3 (dark-ground files) + Gully Labs dark badge into public/ (byte for byte)
+npm run night            # re-vendor Gully Chain Night from a gully-ops checkout: npm run night -- ../../gully-ops <commit>
 npm run routes -- ../../gully-ops/l3/hyperlane/registry
 npm run dev              # VITE_DIRECTION=a|b|c; GullyChain RPC is proxied to the SSH tunnel (127.0.0.1:18545)
 npm test                 # unit tests

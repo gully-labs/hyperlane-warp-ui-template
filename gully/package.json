@@ -8,6 +8,7 @@
   "scripts": {
     "routes": "node scripts/sync-routes.mjs",
     "brand": "node scripts/brand-from-kit.mjs",
+    "night": "node scripts/sync-gullychain-night.mjs",
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "build:all": "node scripts/build-all.mjs",

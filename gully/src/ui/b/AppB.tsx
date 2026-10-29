@@ -89,12 +89,12 @@ export function RouteVisual({ b, items, heads }: { b: BridgeState; items?: Activ
       <svg viewBox="0 0 1000 340" className="rv-svg" role="img" aria-label={`${b.kind === 'fast' ? 'Fast' : 'Canonical'} route from ${CHAINS[b.from].name} to ${CHAINS[b.to].name}`}>
         <defs>
           <linearGradient id="gcg" x1="0" x2="1">
-            <stop offset="0" stopColor="#0A86C2" />
-            <stop offset="1" stopColor="#16A34A" />
+            <stop offset="0" style={{ stopColor: 'var(--gn-cyan)' }} />
+            <stop offset="1" style={{ stopColor: 'var(--gn-green)' }} />
           </linearGradient>
           <radialGradient id="glow">
-            <stop offset="0" stopColor="#0A86C2" stopOpacity=".35" />
-            <stop offset="1" stopColor="#0A86C2" stopOpacity="0" />
+            <stop offset="0" style={{ stopColor: 'var(--gn-cyan)', stopOpacity: 0.35 }} />
+            <stop offset="1" style={{ stopColor: 'var(--gn-cyan)', stopOpacity: 0 }} />
           </radialGradient>
           <path id="pf" d={fastPath} />
           <path id="pc" d={canonPath} />

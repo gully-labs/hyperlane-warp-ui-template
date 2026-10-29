@@ -20,7 +20,11 @@ export function Header({ className = '' }: { className?: string }) {
   return (
     <header className={`top ${className}`}>
       <div className="top-in">
-        <GullyChainSwitcher current="bridge" className="gcs" />
+        {/* brand kit v3 3D logo (logo/gullychain-logo-transparent.png, 1315x305, byte-identical) on the night header */}
+        <a className="brand" href={LINKS.chain} aria-label="Gully Chain home">
+          <img src="brand/logo/gullychain-logo-transparent.png" width={155} height={36} alt="Gully Chain" />
+        </a>
+        <GullyChainSwitcher current="bridge" theme="dark" logo="off" className="gcs" />
         <nav className={`nav ${open ? 'nav-open' : ''}`} aria-label="Main">
           {NAV.map((n) =>
             n.ext ? (
