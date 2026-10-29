@@ -1,36 +1,27 @@
-// All bridge state for both design directions. The shells (A, B) only render it.
+// All bridge state for every design direction. The shells (A, B, C) only render it.
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { formatEther, isAddress, type Address } from 'viem';
 
-import { CHILD, PARENT, type ChainKey } from '../config/chains';
+import { CHAINS, CHILD, isEvm, PARENT, type ChainKey } from '../config/chains';
+import { REMOTE_CHAINS } from '../config/multichain';
 import { DEFAULT_FAST_ROUTE_ID, FAST_ROUTES, LEGACY_ROUTES, routeFor } from '../config/routes';
 import { getBridgeClient, onBridgeClientChange, type Balances } from '../bridge/bridgeClient';
 import { pub } from '../bridge/clients';
 import { parseAmount } from '../bridge/format';
-import { ends } from '../bridge/localClient';
+import { dropApplies, dropEligible, gasDropEnabled, readGasDrop, type GasDropState } from '../bridge/gasDrop';
+import { isOpen, loadTransfers, saveTransfers } from '../bridge/history';
+import { endsOf, pickOption, tokenOptions } from '../bridge/lanes';
 import { pickRoute } from '../bridge/selectRoute';
 import type { ActivityItem, Direction, Quote, RouteKind, StepDef, StepUpdate, TransferRecord } from '../bridge/types';
 import { walletStore } from '../bridge/wallet';
+import { gullyIdConfig } from '../gully-id/gullyId';
+import { useGullySession } from '../gully-id/useGullySession';
+import { isSolanaAddress } from '../solana/base58';
+import { startSolanaDiscovery, useSolanaWallet } from '../solana/wallet';
 import { toast } from './common/toasts';
 
-const STORE = 'gully-bridge:transfers';
 const REF = 'gully-bridge:ref';
-
-function load<T>(k: string, fallback: T): T {
-  try {
-    const v = localStorage.getItem(k);
-    return v ? (JSON.parse(v) as T) : fallback;
-  } catch {
-    return fallback;
-  }
-}
-function save(k: string, v: unknown) {
-  try {
-    localStorage.setItem(k, JSON.stringify(v));
-  } catch {
-    /* storage unavailable */
-  }
-}
+const GULLY_ID = gullyIdConfig(import.meta.env);
 
 export interface UrlOptions {
   ref?: Address;
@@ -38,6 +29,10 @@ export interface UrlOptions {
   direction?: Direction;
   route?: RouteKind;
   amount?: string;
+  /** ?chain=<registry name>: the chain on the other side of GullyChain (sepolia, basesepolia, bsctestnet, solanadevnet) */
+  chain?: ChainKey;
+  /** ?token=USDC: preselect a token by symbol */
+  token?: string;
   preview: boolean;
 }
 
@@ -66,6 +61,8 @@ export function readUrl(): UrlOptions {
     direction: d === 'withdraw' || d === 'deposit' ? d : undefined,
     route: r === 'fast' || r === 'canonical' ? r : undefined,
     amount: q.get('amount') || undefined,
+    chain: REMOTE_CHAINS.find((c) => c === q.get('chain')),
+    token: q.get('token')?.toUpperCase() || undefined,
     preview: q.has('preview'),
   };
 }
@@ -78,7 +75,7 @@ export function useWallet() {
 
 /** live block heights of both chains (polled), plus a short history for sparklines */
 export function useHeads(intervalMs = 4000) {
-  const [heads, setHeads] = useState<Record<ChainKey, { block?: bigint; history: number[]; ok: boolean }>>({
+  const [heads, setHeads] = useState<Record<'arbitrumsepolia' | 'gullychaintestnet', { block?: bigint; history: number[]; ok: boolean }>>({
     arbitrumsepolia: { history: [], ok: true },
     gullychaintestnet: { history: [], ok: true },
   });
@@ -86,7 +83,7 @@ export function useHeads(intervalMs = 4000) {
     let stop = false;
     const tick = async () => {
       const res = await Promise.all(
-        ([PARENT, CHILD] as ChainKey[]).map((c) =>
+        (['arbitrumsepolia', 'gullychaintestnet'] as const).map((c) =>
           pub(c)
             .getBlockNumber({ cacheTime: 0 })
             .then((b) => [c, b] as const)
@@ -147,28 +144,60 @@ export function useActivity(intervalMs = 20000) {
 
 export function useBridge(url: UrlOptions) {
   const wallet = useWallet();
+  const sol = useSolanaWallet();
+  const { session: gullySession } = useGullySession(GULLY_ID);
   const [, force] = useState(0);
   useEffect(() => onBridgeClientChange(() => force((n) => n + 1)), []);
   const [direction, setDirection] = useState<Direction>(url.direction || 'deposit');
+  const [remote, setRemoteState] = useState<ChainKey>(url.chain || PARENT);
+  const [tokenId, setTokenId] = useState<string | undefined>(() => {
+    if (!url.token) return undefined;
+    return tokenOptions(url.chain || PARENT, url.direction || 'deposit').find(
+      (o) => o.send.symbol.toUpperCase() === url.token || o.receive.symbol.toUpperCase() === url.token,
+    )?.id;
+  });
   const [amountText, setAmountText] = useState(url.amount || '');
+  const [recipientText, setRecipientText] = useState('');
   const [manualKind, setManualKind] = useState<RouteKind | undefined>(url.route);
   const [fastRouteId, setFastRouteId] = useState(DEFAULT_FAST_ROUTE_ID);
   const [balances, setBalances] = useState<Balances>({});
+  const [laneBal, setLaneBal] = useState<bigint | undefined>();
   const [quotes, setQuotes] = useState<Partial<Record<RouteKind, Quote>>>({});
   const [quoteError, setQuoteError] = useState<string>();
   const [quoting, setQuoting] = useState(false);
   const [steps, setSteps] = useState<StepState>({});
   const [busy, setBusy] = useState(false);
-  const [transfers, setTransfers] = useState<TransferRecord[]>(() => load(STORE, []));
+  const [transfers, setTransfers] = useState<TransferRecord[]>(loadTransfers);
   const [activeId, setActiveId] = useState<string>();
+  const [drop, setDrop] = useState<GasDropState | undefined>();
 
-  const amount = parseAmount(amountText);
+  // the token picker: classic native ETH (Arbitrum Sepolia) plus the multi-chain routes of the chosen chain
+  const options = useMemo(() => tokenOptions(remote, direction), [remote, direction]);
+  const option = pickOption(options, tokenId);
+  const multichain = option?.source === 'multichain';
   // deposits always go through the default (native ETH) route; a retired route (gETH, hypETH) is only used to redeem
   const route = routeFor(direction, fastRouteId);
-  const routeId = route.id;
-  const { from, to } = ends(direction);
+  const routeId = multichain ? option!.id : route.id;
+  const { from, to } = endsOf(remote, direction);
+  const sendDecimals = multichain ? option!.send.decimals : 18;
+  const receiveDecimals = multichain ? option!.receive.decimals : 18;
+  const amount = parseAmount(amountText, sendDecimals);
+  // Cheapest (the canonical Arbitrum bridge) only exists for ETH with Arbitrum Sepolia
+  const canonicalAvailable = option?.source === 'classic' && option.canonical;
 
-  // balances
+  // wallets: the origin chain decides which one signs; the destination decides the recipient format
+  const originIsSolana = !isEvm(from);
+  const destIsSolana = !isEvm(to);
+  const senderAddr = originIsSolana ? sol.address : wallet.address;
+  const needsRecipient = originIsSolana !== destIsSolana;
+  const defaultRecipient = destIsSolana ? sol.address : originIsSolana ? wallet.address : wallet.address;
+  const recipient = (recipientText.trim() || defaultRecipient || '').trim();
+  const recipientValid = destIsSolana ? isSolanaAddress(recipient) : isAddress(recipient);
+  useEffect(() => {
+    if (!isEvm(remote)) startSolanaDiscovery();
+  }, [remote]);
+
+  // balances of the classic lanes
   useEffect(() => {
     if (!wallet.address) {
       setBalances({});
@@ -177,7 +206,7 @@ export function useBridge(url: UrlOptions) {
     let stop = false;
     const tick = () =>
       getBridgeClient()
-        .balances(wallet.address!, routeId)
+        .balances(wallet.address!, route.id)
         .then((b) => !stop && setBalances(b))
         .catch(() => undefined);
     tick();
@@ -186,7 +215,27 @@ export function useBridge(url: UrlOptions) {
       stop = true;
       clearInterval(id);
     };
-  }, [wallet.address, routeId]);
+  }, [wallet.address, route.id]);
+
+  // balance of what a multi-chain lane sends
+  const sendToken = option?.send;
+  useEffect(() => {
+    setLaneBal(undefined);
+    const c = getBridgeClient();
+    if (!multichain || !sendToken || !senderAddr || !c.laneBalance) return;
+    let stop = false;
+    const tick = () =>
+      c.laneBalance!(sendToken, senderAddr)
+        .then((b) => !stop && setLaneBal(b))
+        .catch(() => undefined);
+    tick();
+    const id = setInterval(tick, 12000);
+    return () => {
+      stop = true;
+      clearInterval(id);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [multichain, routeId, sendToken?.chain, senderAddr]);
 
   // retired-route tokens the wallet still holds: the UI offers to redeem them for ETH on Arbitrum Sepolia
   const legacyHoldings = LEGACY_ROUTES.map((r) => ({
@@ -212,24 +261,34 @@ export function useBridge(url: UrlOptions) {
       }),
     [direction, amount, quotes.fast?.available, wallet.address, balances.fastToken, balances.childEth],
   );
-  const kind: RouteKind = manualKind || pick.kind;
+  const kind: RouteKind = canonicalAvailable ? manualKind || pick.kind : 'fast';
 
-  // quotes for both lanes, debounced
+  // quotes (both lanes on the classic pair, Fast only elsewhere), debounced
+  const quoteRecipient = recipientValid ? recipient : undefined;
   useEffect(() => {
-    const amt = amount && amount > 0n ? amount : 10n ** 15n; // preview quote at 0.001 when empty
     let stop = false;
+    if (!option) {
+      setQuotes({});
+      setQuoting(false);
+      return;
+    }
+    // preview quote at 0.001 of the token when empty
+    const amt = amount && amount > 0n ? amount : 10n ** BigInt(Math.max(0, sendDecimals - 3));
     setQuoting(true);
     const t = setTimeout(async () => {
       const c = getBridgeClient();
-      const req = { direction, amount: amt, sender: wallet.address, ref: url.ref, fastRouteId: routeId };
-      const [f, k] = await Promise.allSettled([c.quote({ ...req, kind: 'fast' }), c.quote({ ...req, kind: 'canonical' })]);
+      const req = { direction, amount: amt, sender: senderAddr, recipient: quoteRecipient, ref: url.ref, fastRouteId: routeId, remote };
+      const [f, k] = await Promise.allSettled([
+        c.quote({ ...req, kind: 'fast' }),
+        canonicalAvailable ? c.quote({ ...req, kind: 'canonical' }) : Promise.reject(new Error('no canonical lane')),
+      ]);
       if (stop) return;
       setQuotes({
         fast: f.status === 'fulfilled' ? f.value : undefined,
         canonical: k.status === 'fulfilled' ? k.value : undefined,
       });
       setQuoteError(
-        f.status === 'rejected' && k.status === 'rejected'
+        f.status === 'rejected' && (k.status === 'rejected' || !canonicalAvailable)
           ? 'Could not reach the chains for a quote. Check your connection and try again.'
           : undefined,
       );
@@ -239,23 +298,59 @@ export function useBridge(url: UrlOptions) {
       stop = true;
       clearTimeout(t);
     };
-  }, [direction, amount, wallet.address, url.ref, routeId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [direction, amount, senderAddr, quoteRecipient, url.ref, routeId, remote, canonicalAvailable, !!option]);
 
   const quote = quotes[kind];
 
-  // tracking of open transfers
-  useEffect(() => save(STORE, transfers.slice(0, 50)), [transfers]);
+  // gas on arrival: GullyGasDrop for a first non-ETH deposit; Gully ID passkey smart accounts use the paymaster
+  const gullyIdSmart = gullySession?.user.wallets?.some(
+    (w) => w.kind === 'kernel-v3.3' && w.address.toLowerCase() === recipient.toLowerCase(),
+  );
+  const dropCandidate = !!option && option.live && gasDropEnabled() && dropApplies(option) && isAddress(recipient);
   useEffect(() => {
-    const open = transfers.filter((t) => !['delivered', 'claimed', 'failed'].includes(t.status));
+    setDrop(undefined);
+    if (!dropCandidate || gullyIdSmart) return;
+    let stop = false;
+    readGasDrop(recipient as Address)
+      .then((d) => !stop && setDrop(d))
+      .catch(() => undefined);
+    return () => {
+      stop = true;
+    };
+  }, [dropCandidate, gullyIdSmart, recipient]);
+  const gasInfo: { kind: 'drop' | 'paymaster' | 'empty'; amount?: bigint } | undefined = !dropCandidate
+    ? undefined
+    : gullyIdSmart
+      ? { kind: 'paymaster' }
+      : drop && dropEligible(drop)
+        ? { kind: 'drop', amount: drop.dropAmount }
+        : drop && !drop.dropped
+          ? { kind: 'empty' }
+          : undefined;
+
+  // tracking of open transfers (and of an expected gas drop for a while after delivery)
+  useEffect(() => saveTransfers(transfers), [transfers]);
+  useEffect(() => {
+    const watchDrop = (t: TransferRecord) => t.gasDrop === 'expected' && Date.now() - t.createdAt < 30 * 60_000;
+    const open = transfers.filter((t) => isOpen(t) || watchDrop(t));
     if (!open.length) return;
     const id = setInterval(async () => {
       for (const t of open) {
         try {
-          const n = await getBridgeClient().track(t);
-          if (n.status !== t.status) {
+          let n = isOpen(t) ? await getBridgeClient().track(t) : t;
+          if (n.status === 'delivered' && watchDrop(n) && isAddress(n.recipient)) {
+            const d = await readGasDrop(n.recipient as Address).catch(() => undefined);
+            if (d?.dropped) n = { ...n, gasDrop: 'received', updatedAt: Date.now() };
+          }
+          if (n.status !== t.status || n.gasDrop !== t.gasDrop || n.messageId !== t.messageId || n.destTx !== t.destTx) {
             setTransfers((all) => all.map((x) => (x.id === n.id ? n : x)));
-            if (n.status === 'delivered') toast({ kind: 'success', title: 'Delivered', body: `${n.receiveSymbol} arrived on ${n.to === CHILD ? 'GullyChain' : 'Arbitrum Sepolia'}` });
-            if (n.status === 'claimable') toast({ kind: 'info', title: 'Ready to claim', body: 'Your withdrawal passed the challenge period' });
+            if (n.status === 'delivered' && t.status !== 'delivered')
+              toast({ kind: 'success', title: 'Delivered', body: `${n.receiveSymbol} arrived on ${CHAINS[n.to].name}` });
+            if (n.status === 'claimable' && t.status !== 'claimable')
+              toast({ kind: 'info', title: 'Ready to claim', body: 'Your withdrawal passed the challenge period' });
+            if (n.gasDrop === 'received' && t.gasDrop !== 'received')
+              toast({ kind: 'success', title: 'Gas drop received', body: 'A little ETH for fees is in your GullyChain wallet' });
           }
         } catch {
           /* retry next tick */
@@ -283,15 +378,24 @@ export function useBridge(url: UrlOptions) {
     setSteps((s) => ({ ...s, [u.step]: { state: u.state, tx: u.tx ?? s[u.step]?.tx, message: u.message } }));
   }, []);
 
-  const balanceFrom: bigint | undefined =
-    direction === 'deposit' ? balances.parentEth : kind === 'fast' ? balances.fastToken : balances.childEth;
+  const balanceFrom: bigint | undefined = multichain
+    ? laneBal
+    : direction === 'deposit'
+      ? balances.parentEth
+      : kind === 'fast'
+        ? balances.fastToken
+        : balances.childEth;
 
   let blocker: string | undefined;
-  if (!amount || amount <= 0n) blocker = 'Enter an amount';
+  if (!option) blocker = 'No route to this chain yet';
+  else if (!option.live) blocker = 'Coming soon';
+  else if (!amount || amount <= 0n) blocker = 'Enter an amount';
+  else if (needsRecipient && !recipientValid) blocker = destIsSolana ? 'Enter a Solana address' : 'Enter a GullyChain address';
   else if (!quote) blocker = quoting ? 'Getting a quote' : 'No quote';
-  else if (wallet.address && balanceFrom !== undefined && amount > balanceFrom) blocker = `Insufficient ${quote.sendSymbol} balance`;
+  else if (senderAddr && balanceFrom !== undefined && amount > balanceFrom) blocker = `Insufficient ${quote.sendSymbol} balance`;
   else if (!quote.available) blocker = quote.reason || 'Route unavailable';
   else if (
+    !multichain &&
     wallet.address &&
     balanceFrom !== undefined &&
     quote.value > 0n &&
@@ -299,19 +403,21 @@ export function useBridge(url: UrlOptions) {
     balanceFrom < quote.value
   )
     blocker = 'Insufficient balance';
-  else if (wallet.address && balanceFrom !== undefined && amount > balanceFrom) blocker = 'Insufficient balance';
+  else if (multichain && option.send.tokenType === 'native' && senderAddr && balanceFrom !== undefined && balanceFrom < quote.value)
+    blocker = 'Not enough for the amount plus fees';
 
   const send = useCallback(async () => {
     if (!quote || !amount) return;
     setBusy(true);
     setSteps({});
     try {
-      const q = { ...quote, req: { ...quote.req, amount, sender: wallet.address, recipient: wallet.address, ref: url.ref } };
-      const rec = await getBridgeClient().execute(q, onStep);
+      const q = { ...quote, req: { ...quote.req, amount, sender: senderAddr, recipient: recipient || senderAddr, ref: url.ref } };
+      let rec = await getBridgeClient().execute(q, onStep);
+      if (gasInfo?.kind === 'drop' && rec.status !== 'failed') rec = { ...rec, gasDrop: 'expected' };
       setTransfers((all) => [rec, ...all.filter((t) => t.id !== rec.id)]);
       setActiveId(rec.id);
       if (rec.status === 'failed') toast({ kind: 'error', title: 'Transaction failed', body: rec.error || 'Reverted' });
-      else toast({ kind: 'success', title: 'Sent', body: `${quote.req.kind === 'fast' ? 'Fast' : 'Canonical'} transfer submitted` });
+      else toast({ kind: 'success', title: 'Sent', body: `${quote.req.kind === 'fast' ? 'Fast' : 'Cheapest'} transfer submitted` });
       setAmountText('');
     } catch (e) {
       const msg = (e as { shortMessage?: string }).shortMessage || (e as Error).message || 'Something went wrong';
@@ -323,7 +429,7 @@ export function useBridge(url: UrlOptions) {
     } finally {
       setBusy(false);
     }
-  }, [quote, amount, wallet.address, url.ref, onStep]);
+  }, [quote, amount, senderAddr, recipient, url.ref, onStep, gasInfo?.kind]);
 
   const claim = useCallback(
     async (rec: TransferRecord) => {
@@ -344,9 +450,22 @@ export function useBridge(url: UrlOptions) {
   const active = transfers.find((t) => t.id === activeId);
   const stepDefs: StepDef[] = quote?.steps || [];
 
+  const setRemote = (c: ChainKey) => {
+    // keep the same token when the new chain has it
+    const sym = option?.send.symbol;
+    const next = tokenOptions(c, direction);
+    setRemoteState(c);
+    setTokenId(next.find((o) => o.live && o.send.symbol === sym)?.id || next.find((o) => o.send.symbol === sym)?.id);
+    setFastRouteId(DEFAULT_FAST_ROUTE_ID);
+    setManualKind(undefined);
+    setRecipientText('');
+    setSteps({});
+  };
+
   return {
     url,
     wallet,
+    sol,
     direction,
     setDirection: (d: Direction) => {
       setDirection(d);
@@ -356,13 +475,36 @@ export function useBridge(url: UrlOptions) {
     flip: () => {
       setDirection((d) => (d === 'deposit' ? 'withdraw' : 'deposit'));
       setFastRouteId(DEFAULT_FAST_ROUTE_ID);
+      setRecipientText('');
       setSteps({});
     },
+    remote,
+    setRemote,
+    options,
+    option,
+    setTokenId: (id: string) => {
+      setTokenId(id);
+      setAmountText('');
+      setSteps({});
+    },
+    multichain,
+    canonicalAvailable,
     from,
     to,
+    sendDecimals,
+    receiveDecimals,
     amountText,
     setAmountText,
     amount,
+    recipientText,
+    setRecipientText,
+    recipient,
+    recipientValid,
+    needsRecipient,
+    originIsSolana,
+    destIsSolana,
+    senderAddr,
+    gasInfo,
     kind,
     pick,
     manualKind,
@@ -376,6 +518,8 @@ export function useBridge(url: UrlOptions) {
     redeemLegacy: (id: string) => {
       const h = legacyHoldings.find((x) => x.routeId === id);
       if (!h) return;
+      setRemoteState(PARENT);
+      setTokenId(undefined);
       setDirection('withdraw');
       setFastRouteId(id);
       setManualKind('fast');
