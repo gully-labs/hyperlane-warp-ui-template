@@ -90,7 +90,7 @@ a:hover { color: var(--link-h); }
 .mine-claimable .mine-status { color: var(--info); }
 
 /* modal + toasts */
-.modal-bg { background: rgba(11, 13, 18, 0.35); }
+.modal-bg { background: rgba(11, 13, 18, 0.4); }
 .modal { background: #fff; border-color: var(--border); box-shadow: 0 24px 60px rgba(11, 13, 18, 0.18); }
 .wallet-list button { border-radius: 10px; background: #fff; }
 .wallet-list button:hover { border-color: var(--accent); background: var(--hover); }
