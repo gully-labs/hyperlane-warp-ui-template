@@ -193,7 +193,12 @@
     var dlg = this._dlg;
     if (!dlg || dlg.open || this._peek) return;
     this.place();
+    var prev = document.activeElement;
     try { dlg.showPopover(); } catch (e) { return; }
+    // showing a <dialog> as a popover runs the dialog focusing steps (Chromium focuses the first item and draws its
+    // focus ring); a hover peek must not move focus, so hand it back to where it was
+    var a = this.shadowRoot && this.shadowRoot.activeElement;
+    if (a && dlg.contains(a)) { a.blur(); var back = prev === this ? this._trig : prev; if (back && back !== document.body && typeof back.focus === 'function') back.focus({ preventScroll: true }); }
     this._peek = true;
     this._trig.setAttribute('aria-expanded', 'true');
   };
