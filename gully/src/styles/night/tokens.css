@@ -81,9 +81,11 @@
   --gn-maxw: 1320px;
   --gn-header-h: 64px;
   --gn-section: clamp(64px, 9vw, 128px);   /* vertical rhythm between bands */
+  --gn-section-compact: clamp(48px, 5.6vw, 80px);  /* v1.1: compact pages (owner 2026-10-29: minimal, compact) */
 
   /* ---- shape ---- */
   --gn-r-sm: 8px; --gn-r: 12px; --gn-r-lg: 16px; --gn-r-xl: 24px; --gn-r-pill: 999px;
+  --gn-stroke: 1px;              /* every rule, border and chart grid line; icons stroke 1.75 at 16-24 px */
 
   /* ---- elevation: on black, depth is a line plus a soft glow, never a grey drop shadow ---- */
   --gn-shadow: 0 0 0 1px var(--gn-line), 0 16px 40px rgba(0, 0, 0, .55);
@@ -97,10 +99,13 @@
   --gn-dur-slow: 700ms;
 
   /* ---- buttons (signature pill, owner rule 2026-10-25) ---- */
-  --gn-btn-h: 48px; --gn-btn-h-sm: 38px; --gn-btn-px: 22px; --gn-btn-r: var(--gn-r-pill);
+  --gn-btn-h: 48px; --gn-btn-h-sm: 40px; --gn-btn-px: 24px; --gn-btn-r: var(--gn-r-pill);
   --gn-btn-pri-bg: var(--gn-cyan);   --gn-btn-pri-fg: var(--gn-on-cyan);  --gn-btn-pri-hover: #33C3FF;
   --gn-btn-sec-bg: var(--gn-blue);   --gn-btn-sec-fg: var(--gn-on-blue);  --gn-btn-sec-hover: #3D75FF;
   --gn-btn-ghost-bd: var(--gn-line-strong); --gn-btn-ghost-fg: var(--gn-text); --gn-btn-ghost-hover: var(--gn-surface-2);
+  --gn-btn-edge: var(--gn-gradient);  /* v1.1: the kit gradient as a 1 px button edge */
+  --gn-btn-glow: 0 0 0 1px rgba(0, 178, 250, .5), 0 8px 32px rgba(0, 178, 250, .35);
+  --gn-btn-chip-bg: var(--gn-night); --gn-btn-chip-fg: var(--gn-cyan);   /* the round arrow chip */
 
   color-scheme: dark;
 }
