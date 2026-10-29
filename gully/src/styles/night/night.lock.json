@@ -1,0 +1,31 @@
+{
+  "repo": "gully-labs/gully-ops",
+  "ref": "1e17459e",
+  "commit": "1e17459eb9008d08d278eb3a41e2a83b5bf0beaf",
+  "files": {
+    "src/styles/night/tokens.css": {
+      "source": "sites/_shared/gullychain-night/tokens.css",
+      "sha256": "650293970205665a72658b3be36de36348ae40a60131c95897c2b94aa0ab4611"
+    },
+    "src/styles/night/components.css": {
+      "source": "sites/_shared/gullychain-night/components.css",
+      "sha256": "2f97fcf45ac80d379cdf6fb2dc8640e51517effe4ab43f33a81e0572356a50eb"
+    },
+    "src/styles/night/charts.js": {
+      "source": "sites/_shared/gullychain-night/charts.js",
+      "sha256": "c88ff1aa5102e5c5bda79861089139a19340664f776699a40818ee9da524149b"
+    },
+    "public/assets/fonts/exo2-600.woff2": {
+      "source": "sites/_shared/brand/fonts/exo2-600.woff2",
+      "sha256": "fd2112e53440975a4885179f3d09058787b97b711e7e141c55fcaecaf48fbcb6"
+    },
+    "public/assets/fonts/exo2-800.woff2": {
+      "source": "sites/_shared/brand/fonts/exo2-800.woff2",
+      "sha256": "d610f14745a7eb6b2fb5746431d28c189776152752eea5ff5c8f2da828bae823"
+    },
+    "public/assets/fonts/OFL.txt": {
+      "source": "sites/_shared/brand/fonts/OFL.txt",
+      "sha256": "7f95a8eeecc6904ffc81cd10cc8ebc7fcee72a67922924bf45f02dff03b88127"
+    }
+  }
+}

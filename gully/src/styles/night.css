@@ -1,0 +1,71 @@
+/* Gully Chain Night (GN) finish, loaded last. The look is the shared black design in src/styles/night/tokens.css
+   (vendored from gully-ops sites/_shared/gullychain-night, README.md there): ground --gn-night, true-black footer band,
+   ink cards with a line and a dark glow, Exo 2 600/800 only, signature pill buttons, cyan primary / blue secondary.
+   No colour literals: every value is a --gn-* token. */
+html, body { background: var(--gn-bg); color: var(--gn-text); }
+body { font-family: var(--gn-font); font-weight: var(--gn-w-regular); }
+h1, h2, h3, b, strong, .h-card { font-weight: var(--gn-w-bold); }
+a:hover { color: var(--gn-link-hover); }
+:focus-visible { outline: 2px solid var(--gn-cyan); outline-offset: 3px; }
+.label { color: var(--gn-cyan); letter-spacing: var(--gn-track-label); }
+
+/* header: kit 3D logo at 36 px, dark product switcher, blurred night bar */
+.top { background: rgba(5, 8, 13, 0.82); border-bottom-color: var(--gn-line); }
+.top-in { min-height: var(--gn-header-h); }
+.brand { min-height: 44px; }
+.brand img { height: 36px; width: auto; }
+.nav-l:hover { background: var(--gn-surface-2); color: var(--gn-text); }
+.nav-on, .nav-on:hover { color: var(--gn-cyan); background: var(--gn-info-bg); }
+@media (max-width: 900px) { .nav { top: var(--gn-header-h); background: var(--gn-ink); box-shadow: var(--gn-shadow); } }
+/* phones: the 36 px kit logo, the switcher, Connect and the menu share one row, so the header Connect is icon-only (its
+   label stays as the accessible name; the bridge card has the full "Connect wallet" button) */
+@media (max-width: 560px) {
+  .top-in { gap: 8px; padding: 0 12px; }
+  .top-act { gap: 6px; }
+  .top-act .btn-sm { width: 44px; min-height: 44px; padding: 0; gap: 0; }
+  .top-act .btn-sm > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .top-act .btn-sm::after { display: none; }
+}
+
+/* signature pill buttons (owner rule 2026-10-25): cyan primary, blue secondary, line ghost; shine, arrow, scale .98 */
+.btn { min-height: var(--gn-btn-h); padding: 0 var(--gn-btn-px); border-radius: var(--gn-btn-r); font-weight: var(--gn-w-bold); }
+.btn-primary { background: var(--gn-btn-pri-bg); color: var(--gn-btn-pri-fg); box-shadow: var(--gn-glow); }
+.btn-primary:hover { background: var(--gn-btn-pri-hover); color: var(--gn-btn-pri-fg); }
+.btn-secondary { background: var(--gn-btn-sec-bg); color: var(--gn-btn-sec-fg); }
+.btn-secondary:hover { background: var(--gn-btn-sec-hover); color: var(--gn-btn-sec-fg); }
+.btn-ghost { border-color: var(--gn-btn-ghost-bd); color: var(--gn-btn-ghost-fg); }
+.btn-ghost:hover { background: var(--gn-btn-ghost-hover); color: var(--gn-btn-ghost-fg); }
+.btn-sm { min-height: var(--gn-btn-h-sm); }
+.wallet-pill { background: var(--gn-surface); border-color: var(--gn-line-strong); }
+
+/* cards: ink with a line and a dark glow, never a grey drop shadow */
+.a .tile, .a .card, .feed-b, .swap { background: var(--gn-surface); border-color: var(--gn-line); }
+.swap { box-shadow: var(--gn-shadow-pop); }
+.a .card.chart-card { transition: transform var(--gn-dur) var(--gn-ease), box-shadow var(--gn-dur) var(--gn-ease); }
+.a .card.chart-card:hover { transform: translateY(-3px); box-shadow: var(--gn-glow); }
+.tile-num, .swap-recv-num, .money .num, .amount input { font-weight: var(--gn-w-bold); }
+.modal { background: var(--gn-surface); border-color: var(--gn-line-strong); box-shadow: var(--gn-shadow-pop); }
+.toast { background: var(--gn-surface); }
+.tip { background: var(--gn-surface-2); }
+.spark-line { stroke: var(--gn-c1); }
+.spark-fill { fill: var(--gn-area); }
+.grid { stroke: var(--gn-grid); }
+
+/* footer: true-black band, kit dark-bg wordmark, dark badges */
+.foot { background: var(--gn-black); border-top-color: var(--gn-line); }
+.foot-brand { display: inline-flex; align-items: center; justify-self: start; }
+.foot-brand img { display: block; width: auto; height: 24px; max-width: none; }
+.gc-badge { display: inline-flex; line-height: 0; }
+.gc-badge img { width: 142px; height: 42px; }
+.badge-link img { width: 190px; height: 48px; }
+.foot-links a { color: var(--gn-text-2); }
+.foot-links a:hover { color: var(--gn-text); }
+.credit, .credit a { color: var(--gn-text-3); }
+
+/* embed (?embed=1, /embed): the card only, transparent ground for the host page */
+.is-embed html, .is-embed body { background: transparent; }
+.is-embed .foot { background: transparent; }
+
+@media (prefers-reduced-motion: reduce) {
+  .a .card.chart-card:hover { transform: none; }
+}
