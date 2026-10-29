@@ -122,6 +122,12 @@ a:hover { color: var(--link-h); }
 .foot-links a { color: var(--text-2); }
 .foot-links a:hover { color: var(--link); }
 .badge-link img { width: 160px; }
+.foot-brand { display: inline-flex; align-items: center; gap: 8px; justify-self: start; }
+.foot-brand img { display: block; flex: none; max-width: none; }
+.foot-brand img:first-child { width: 28px; height: 28px; }
+.foot-brand img:last-child { width: auto; height: 20px; }
+.gc-badge { display: inline-flex; line-height: 0; }
+.gc-badge img { width: 142px; height: 42px; }
 .credit, .credit a { color: var(--muted-c); }
 .ref-pill { color: var(--ok); background: var(--ok-bg); border: 0; border-radius: 5px; }
 .testnet-tag { border: 0; border-radius: 4px; background: var(--warn-bg); color: var(--warn); }

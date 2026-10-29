@@ -546,6 +546,12 @@ export function Footer({ minimal }: { minimal?: boolean }) {
   return (
     <footer className="foot">
       <div className="foot-in">
+        {/* brand-kit lockup for light grounds: the dark tile (android-chrome-512.png = icon/gullychain-icon-dark-512.png)
+            + the light-bg wordmark SVG, byte-identical kit files with explicit sizes */}
+        <a className="foot-brand" href={LINKS.chain}>
+          <img src="android-chrome-512.png" width={28} height={28} alt="" />
+          <img src="brand/logo/gullychain-wordmark-for-light-bg.svg" width={117} height={20} alt="Gully Chain" />
+        </a>
         {!minimal && (
           <nav className="foot-links" aria-label="Footer">
             <Ext href={LINKS.chain}>GullyChain</Ext>
@@ -558,6 +564,15 @@ export function Footer({ minimal }: { minimal?: boolean }) {
           </nav>
         )}
         <div className="foot-badges">
+          <a className="gc-badge" href={LINKS.chain} aria-label="Powered by GullyChain">
+            <img
+              src="brand/badges/gullychain-powered-by-light.svg"
+              srcSet="brand/badges/gullychain-powered-by-light.png 1x, brand/badges/gullychain-powered-by-light-2x.png 2x, brand/badges/gullychain-powered-by-light-3x.png 3x"
+              width={142}
+              height={42}
+              alt="Powered by GullyChain"
+            />
+          </a>
           <Ext href={LINKS.gullyLabs} className="badge-link" newTab>
             <img
               src="brand/badges/powered-by-gully-labs-light.svg"
