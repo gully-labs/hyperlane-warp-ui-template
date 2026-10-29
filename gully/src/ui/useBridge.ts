@@ -6,6 +6,7 @@ import { CHILD, PARENT, type ChainKey } from '../config/chains';
 import { DEFAULT_FAST_ROUTE_ID, FAST_ROUTES, LEGACY_ROUTES, routeFor } from '../config/routes';
 import { getBridgeClient, onBridgeClientChange, type Balances } from '../bridge/bridgeClient';
 import { pub } from '../bridge/clients';
+import { track } from '../analytics/umami';
 import { parseAmount } from '../bridge/format';
 import { ends } from '../bridge/localClient';
 import { pickRoute } from '../bridge/selectRoute';
@@ -311,7 +312,10 @@ export function useBridge(url: UrlOptions) {
       setTransfers((all) => [rec, ...all.filter((t) => t.id !== rec.id)]);
       setActiveId(rec.id);
       if (rec.status === 'failed') toast({ kind: 'error', title: 'Transaction failed', body: rec.error || 'Reverted' });
-      else toast({ kind: 'success', title: 'Sent', body: `${quote.req.kind === 'fast' ? 'Fast' : 'Canonical'} transfer submitted` });
+      else {
+        track('bridge', { lane: quote.req.kind });
+        toast({ kind: 'success', title: 'Sent', body: `${quote.req.kind === 'fast' ? 'Fast' : 'Canonical'} transfer submitted` });
+      }
       setAmountText('');
     } catch (e) {
       const msg = (e as { shortMessage?: string }).shortMessage || (e as Error).message || 'Something went wrong';
