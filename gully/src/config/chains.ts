@@ -83,7 +83,9 @@ export const LINKS = {
   faucet: 'https://faucet.gullychain.xyz',
   docs: 'https://docs.gullychain.xyz/bridging/',
   chain: 'https://gullychain.xyz',
-  gullyLabs: 'https://gullylabs.xyz',
+  gullyLabs: 'https://gullylabs.xyz', // the Powered by Gully Labs badge only
+  /** Every other Gully product is listed once, on the docs ecosystem page (owner rule 2026-10-29). */
+  ecosystem: 'https://docs.gullychain.xyz/ecosystem/',
   telegram: 'https://t.me/GullyChain',
   discord: 'https://discord.com/invite/tY2ErsNNBp',
   x: 'https://x.com/Gully_Labs',

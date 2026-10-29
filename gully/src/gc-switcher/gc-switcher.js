@@ -6,10 +6,13 @@
  * No dependencies, shadow DOM (the host page's CSS cannot restyle it). 1.5.0: Studio Light look (white panel, ink text,
  * accent #0A86C2, Inter) by default; theme="dark" keeps the brand kit v3 dark look for dark headers. 1.5.1: the logo is the
  * official brand-kit files embedded byte for byte (dark tile icon + light-bg / dark-bg wordmark SVG), never redrawn;
- * logo="off" hides it where the page already shows the kit logo (no double mark). Pay is described in USDC.
+ * logo="off" hides it where the page already shows the kit logo (no double mark). 1.6.0: Gully Chain products only
+ * (owner rule 2026-10-29): Pay and Gully ID left the grid; the other Gully products are listed once, on
+ * docs.gullychain.xyz/ecosystem/.
  *
  * Attributes
- *   current    app | bridge | explorer | faucet | safe | verify | sentry | offers | pay | id | docs | dev | status   (highlighted item + trigger label)
+ *   current    app | bridge | explorer | faucet | safe | verify | sentry | offers | docs | dev | status   (highlighted item + trigger label;
+ *              pay and id are still accepted but no longer in the grid since 1.6.0, so the trigger reads "Apps")
  *   theme      light (default since 1.5.0, Studio Light) | dark (kit v3 night, for surfaces whose header is still dark)
  *   logo       on (default) | off: no logo, only the product-name trigger (for headers that already show the kit logo)
  *   safe-live  kept for older surfaces; ignored since 1.1.0 (Gully Safe is live at safe.gullychain.xyz)
@@ -18,9 +21,9 @@
   'use strict';
   if (typeof window === 'undefined' || !window.customElements || window.customElements.get('gc-switcher')) return;
 
-  var GC_SWITCHER_VERSION = '1.5.1';
+  var GC_SWITCHER_VERSION = '1.6.0';
   var HOME = 'https://gullychain.xyz/';
-  // Every entry is a Gully product, so every link opens in the same tab (one product family).
+  // Gully Chain products and services only (1.6.0): every link opens in the same tab. Other Gully products: docs ecosystem page.
   var PRODUCTS = [
     { id: 'app', label: 'App', desc: 'Social trading app', href: 'https://app.gullychain.xyz/', icon: '<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/>' },
     { id: 'bridge', label: 'Bridge', desc: 'Move ETH in and out', href: 'https://testnet-bridge.gullychain.xyz/', icon: '<path d="M3 18h18M5 18v-5a7 7 0 0 1 14 0v5M9 18v-4M15 18v-4"/>' },
@@ -30,8 +33,6 @@
     { id: 'verify', label: 'Verify', desc: 'Contract source, Sourcify', href: 'https://verify.gullychain.xyz/', icon: '<path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/><path d="m9 12 2 2 4-4"/>' },
     { id: 'sentry', label: 'Sentry', desc: 'Free keys, run a watcher', href: 'https://sentry.gullychain.xyz/', icon: '<path d="M19.07 4.93A10 10 0 0 0 6.99 3.34"/><path d="M2.29 9.62A10 10 0 1 0 21.31 8.35"/><path d="M16.24 7.76A6 6 0 1 0 8.23 16.67"/><path d="M17.99 11.66A6 6 0 0 1 15.77 16.67"/><circle cx="12" cy="12" r="2"/><path d="m13.41 10.59 5.66-5.66"/>' },
     { id: 'offers', label: 'Offerwall', desc: 'Earn rewards, fund quests', href: 'https://offers.gullychain.xyz/', icon: '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/>' },
-    { id: 'pay', label: 'Pay', desc: 'Checkout & x402 in USDC', href: 'https://gullypay.xyz/', icon: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/>' },
-    { id: 'id', label: 'Gully ID', desc: 'One sign-in for every app', href: 'https://gullyid.xyz/', icon: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>' },
     { id: 'docs', label: 'Docs', desc: 'Guides and reference', href: 'https://docs.gullychain.xyz/', icon: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>' },
     { id: 'dev', label: 'Developers', desc: 'Starters and grants', href: 'https://dev.gullychain.xyz/', icon: '<path d="m8 8-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14"/>' },
     { id: 'status', label: 'Status', desc: 'Uptime of every service', href: 'https://status.gullylabs.xyz/', icon: '<path d="M3 12h4l3-7 4 14 3-7h4"/>' }
