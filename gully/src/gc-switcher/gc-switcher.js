@@ -10,6 +10,7 @@
  * (owner rule 2026-10-29): Pay and Gully ID left the grid; the other Gully products are listed once, on
  * docs.gullychain.xyz/ecosystem/. 1.6.1: testnet hosts (2026-10-29): App, Faucet (and Bridge, Explorer) link to the
  * testnet-* subdomains; app/bridge.gullychain.xyz become mainnet on cutover day.
+ * 1.6.2: the app moved to https://kre8.fun/ (owner, 2026-10-29); app.gullychain.xyz 301s there. testnet-app is not used.
  *
  * Attributes
  *   current    app | bridge | explorer | faucet | safe | verify | sentry | offers | docs | dev | status   (highlighted item + trigger label;
@@ -22,11 +23,11 @@
   'use strict';
   if (typeof window === 'undefined' || !window.customElements || window.customElements.get('gc-switcher')) return;
 
-  var GC_SWITCHER_VERSION = '1.6.1';
+  var GC_SWITCHER_VERSION = '1.6.2';
   var HOME = 'https://gullychain.xyz/';
   // Gully Chain products and services only (1.6.0): every link opens in the same tab. Other Gully products: docs ecosystem page.
   var PRODUCTS = [
-    { id: 'app', label: 'App', desc: 'Social trading app', href: 'https://testnet-app.gullychain.xyz/', icon: '<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/>' },
+    { id: 'app', label: 'App', desc: 'Social trading app', href: 'https://kre8.fun/', icon: '<rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/>' },
     { id: 'bridge', label: 'Bridge', desc: 'Move ETH in and out', href: 'https://testnet-bridge.gullychain.xyz/', icon: '<path d="M3 18h18M5 18v-5a7 7 0 0 1 14 0v5M9 18v-4M15 18v-4"/>' },
     { id: 'explorer', label: 'Explorer', desc: 'Blocks, txs, tokens', href: 'https://testnet-explorer.gullychain.xyz/', icon: '<circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5M8.5 11h5"/>' },
     { id: 'faucet', label: 'Faucet', desc: 'Free testnet ETH', href: 'https://testnet-faucet.gullychain.xyz/', icon: '<path d="M12 3s6 6.4 6 11a6 6 0 0 1-12 0c0-4.6 6-11 6-11Z"/><path d="M9.5 14.5a2.5 2.5 0 0 0 2.5 2.5"/>' },
