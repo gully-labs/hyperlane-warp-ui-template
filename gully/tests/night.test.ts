@@ -103,8 +103,8 @@ describe('navigation reach (gc-switcher 1.8.0 + footer)', () => {
   });
   it('footer links the dev portal, the chain ecosystem page and status', () => {
     const parts = readFileSync(join(app, 'src/ui/common/parts.tsx'), 'utf8');
-    const foot = parts.slice(parts.indexOf('export function Footer'));
-    for (const k of ['LINKS.dev', 'LINKS.chainEcosystem', 'LINKS.status', 'LINKS.explorer', 'LINKS.faucet', 'LINKS.docs']) expect(foot).toContain(`href={${k}}`);
+    const foot = parts.slice(parts.indexOf('export const FOOT_LINKS'), parts.indexOf('export function Footer'));
+    for (const k of ['LINKS.dev', 'LINKS.chainEcosystem', 'LINKS.status', 'LINKS.explorer', 'LINKS.faucet', 'LINKS.docs']) expect(foot).toContain(`href: ${k} }`);
     const chains = readFileSync(join(app, 'src/config/chains.ts'), 'utf8');
     expect(chains).toContain("dev: 'https://dev.gullychain.xyz/'");
     expect(chains).toContain("chainEcosystem: 'https://gullychain.xyz/ecosystem/'");

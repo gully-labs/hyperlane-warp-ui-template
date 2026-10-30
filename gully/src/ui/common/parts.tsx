@@ -543,6 +543,21 @@ function stepDefsOf(t: TransferRecord): StepDef[] {
   ];
 }
 
+/** Footer links: every one carries a Lucide icon next to its label (owner rule 2026-10-30, icons on the whole stack). */
+export const FOOT_LINKS: { label: string; icon: IconName; href: string; newTab?: boolean }[] = [
+  { label: 'GullyChain', icon: 'house', href: LINKS.chain },
+  { label: 'Explorer', icon: 'search', href: LINKS.explorer },
+  { label: 'Faucet', icon: 'droplet', href: LINKS.faucet },
+  { label: 'Docs', icon: 'book', href: LINKS.docs },
+  { label: 'Developers', icon: 'code', href: LINKS.dev },
+  { label: 'Ecosystem', icon: 'grid', href: LINKS.chainEcosystem },
+  { label: 'Status', icon: 'radio', href: LINKS.status },
+  { label: 'Gully ecosystem →', icon: 'globe', href: LINKS.ecosystem, newTab: true },
+  { label: 'Telegram', icon: 'send', href: LINKS.telegram },
+  { label: 'Discord', icon: 'message', href: LINKS.discord },
+  { label: 'X', icon: 'twitter', href: LINKS.x },
+];
+
 export function Footer({ minimal }: { minimal?: boolean }) {
   return (
     <footer className="foot">
@@ -553,19 +568,12 @@ export function Footer({ minimal }: { minimal?: boolean }) {
         </a>
         {!minimal && (
           <nav className="foot-links" aria-label="Footer">
-            <Ext href={LINKS.chain}>GullyChain</Ext>
-            <Ext href={LINKS.explorer}>Explorer</Ext>
-            <Ext href={LINKS.faucet}>Faucet</Ext>
-            <Ext href={LINKS.docs}>Docs</Ext>
-            <Ext href={LINKS.dev}>Developers</Ext>
-            <Ext href={LINKS.chainEcosystem}>Ecosystem</Ext>
-            <Ext href={LINKS.status}>Status</Ext>
-            <Ext href={LINKS.ecosystem} newTab>
-              Gully ecosystem →
-            </Ext>
-            <Ext href={LINKS.telegram}>Telegram</Ext>
-            <Ext href={LINKS.discord}>Discord</Ext>
-            <Ext href={LINKS.x}>X</Ext>
+            {FOOT_LINKS.map((l) => (
+              <Ext key={l.label} href={l.href} newTab={l.newTab}>
+                <Icon name={l.icon} />
+                {l.label}
+              </Ext>
+            ))}
           </nav>
         )}
         <div className="foot-badges">

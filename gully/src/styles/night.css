@@ -18,6 +18,10 @@ a:hover { color: var(--gn-link-hover); }
 .brand img { width: 32px; height: 32px; }
 .nav-l:hover { background: var(--gn-surface-2); color: var(--gn-text); }
 .nav-on, .nav-on:hover { color: var(--gn-link); background: var(--gn-info-bg); }   /* GN 2.0: active nav mint on deep green (5.6:1) */
+/* owner rule 2026-10-30, icons on the whole stack: every nav item (header, mobile menu, footer) has a 20 px Lucide icon,
+   stroke 1.75, muted by default and mint when active; the text label stays */
+.nav-l svg, .foot-links a svg { width: 20px; height: 20px; flex: none; color: var(--gn-text-3); }
+.nav-on svg { color: var(--gn-link); }
 @media (max-width: 900px) { .nav { top: var(--gn-header-h); background: var(--gn-ink); box-shadow: var(--gn-shadow); } }
 /* phones: the 32 px kit icon, the switcher, Connect and the menu share one row, so the header Connect is icon-only (its
    label stays as the accessible name; the bridge card has the full "Connect wallet" button) */
@@ -60,7 +64,7 @@ a:hover { color: var(--gn-link-hover); }
 .gc-badge { display: inline-flex; line-height: 0; }
 .gc-badge img { width: 180px; height: 48px; }
 .badge-link img { width: 190px; height: 48px; }
-.foot-links a { color: var(--gn-text-2); }
+.foot-links a { color: var(--gn-text-2); gap: 6px; }
 .foot-links a:hover { color: var(--gn-text); }
 .credit, .credit a { color: var(--gn-text-3); }
 
