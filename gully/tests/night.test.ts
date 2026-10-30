@@ -67,10 +67,10 @@ describe('brand kit files on the black pages', () => {
 });
 
 // Design-gap audit 2026-10-29: one click from the bridge to every key Gully Chain surface.
-describe('navigation reach (gc-switcher 1.7.0 + footer)', () => {
-  it('ships gc-switcher 1.7.0 (hover opens the grid; Ecosystem entry) in the dark header', () => {
+describe('navigation reach (gc-switcher 1.7.1 + footer)', () => {
+  it('ships gc-switcher 1.7.1 (hover opens the grid; Ecosystem entry) in the dark header', () => {
     const js = readFileSync(join(app, 'src/gc-switcher/gc-switcher.js'), 'utf8');
-    expect(js).toMatch(/GC_SWITCHER_VERSION = '1\.7\.0'/);
+    expect(js).toMatch(/GC_SWITCHER_VERSION = '1\.7\.1'/);
     expect(js).toMatch(/id: 'ecosystem'[^}]*https:\/\/gullychain\.xyz\/ecosystem\//);
     expect(js).toMatch(/showPopover\(\)/);
     const shell = readFileSync(join(app, 'src/ui/common/shell.tsx'), 'utf8');
