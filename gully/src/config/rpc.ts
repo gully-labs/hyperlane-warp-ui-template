@@ -1,16 +1,15 @@
 /**
- * GullyChain Testnet (485590) public RPCs, in fallback order (shared Gully RPC fallback contract, 2026-10-26):
+ * GullyChain Testnet (485590) public RPCs, in fallback order (testnet-* subdomains, 2026-10-29):
  * 1. same-origin `/rpc`, only in the browser on a gullychain.xyz host (avoids ISP filtering of "testnet-" hostnames)
- * 2. rpc.gullychain.xyz (gully-l3 eRPC, canonical)
+ * 2. testnet-rpc.gullychain.xyz (gully-l3 eRPC, canonical)
  * 3. rpc.gullyrpc.xyz keyless Gully RPC project (gully box, a different server)
  * 4. rpc2.gullychain.xyz (gully-l3, direct to the nodes)
- * 5. testnet-rpc.gullychain.xyz (legacy, filtered on some ISPs)
+ * rpc.gullychain.xyz is NOT listed: it becomes the mainnet (48559) RPC on cutover day.
  */
 export const GULLY_PUBLIC_RPCS = [
-  'https://rpc.gullychain.xyz',
+  'https://testnet-rpc.gullychain.xyz',
   'https://rpc.gullyrpc.xyz/gullychain/evm/485590',
   'https://rpc2.gullychain.xyz',
-  'https://testnet-rpc.gullychain.xyz',
 ] as const;
 
 /**
@@ -18,10 +17,9 @@ export const GULLY_PUBLIC_RPCS = [
  * Same order as GULLY_PUBLIC_RPCS (all live since 2026-10-27).
  */
 export const GULLY_WALLET_RPCS = [
-  'https://rpc.gullychain.xyz',
+  'https://testnet-rpc.gullychain.xyz',
   'https://rpc.gullyrpc.xyz/gullychain/evm/485590',
   'https://rpc2.gullychain.xyz',
-  'https://testnet-rpc.gullychain.xyz',
 ] as const;
 
 /** Fallback for the ETH/USD endpoint when the page is not served from a gullychain.xyz host. */
