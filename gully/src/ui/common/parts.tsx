@@ -64,9 +64,10 @@ export function Ext({ href, children, className, newTab }: { href: string; child
 /** Official chain logos from the Gully chain-logo pack (gully-ops design/chains; sources in its SOURCES.md), in
  *  public/chains/. Decorative by default (the chain's name is written next to it); pass alt when it stands alone.
  *  badge: the file with the small amber testnet corner badge, for places that show no "Testnet" text. A file that
- *  fails to load falls back to the chain's short text mark. */
+ *  fails to load falls back to the chain's short text mark. GullyChain uses the brand kit v4 icon (brand/logo/gc-icon.svg,
+ *  byte-identical; its hexagon sits inside the round mask, so nothing is cropped) until the chain-logo pack moves to kit v4. */
 const CHAIN_LOGO: Record<ChainKey, { mark: string; badged: string; text: string }> = {
-  gullychaintestnet: { mark: 'chains/gully-chain.svg', badged: 'chains/gully-chain-testnet.svg', text: 'G' },
+  gullychaintestnet: { mark: 'brand/logo/gc-icon.svg', badged: 'brand/logo/gc-icon.svg', text: 'G' },
   arbitrumsepolia: { mark: 'chains/arbitrum.svg', badged: 'chains/arbitrum-sepolia.svg', text: 'ARB' },
 };
 
@@ -542,40 +543,43 @@ function stepDefsOf(t: TransferRecord): StepDef[] {
   ];
 }
 
+/** Footer links: every one carries a Lucide icon next to its label (owner rule 2026-10-30, icons on the whole stack). */
+export const FOOT_LINKS: { label: string; icon: IconName; href: string; newTab?: boolean }[] = [
+  { label: 'GullyChain', icon: 'house', href: LINKS.chain },
+  { label: 'Explorer', icon: 'search', href: LINKS.explorer },
+  { label: 'Faucet', icon: 'droplet', href: LINKS.faucet },
+  { label: 'Docs', icon: 'book', href: LINKS.docs },
+  { label: 'Developers', icon: 'code', href: LINKS.dev },
+  { label: 'Ecosystem', icon: 'grid', href: LINKS.chainEcosystem },
+  { label: 'Status', icon: 'radio', href: LINKS.status },
+  { label: 'Gully ecosystem →', icon: 'globe', href: LINKS.ecosystem, newTab: true },
+  { label: 'Telegram', icon: 'send', href: LINKS.telegram },
+  { label: 'Discord', icon: 'message', href: LINKS.discord },
+  { label: 'X', icon: 'twitter', href: LINKS.x },
+];
+
 export function Footer({ minimal }: { minimal?: boolean }) {
   return (
     <footer className="foot">
       <div className="foot-in">
-        {/* brand kit v3 wordmark for dark grounds (logo/gullychain-wordmark-for-dark-bg.svg, byte-identical) */}
-        <a className="foot-brand" href={LINKS.chain}>
-          <img src="brand/logo/gullychain-wordmark-for-dark-bg.svg" width={141} height={24} alt="Gully Chain" />
+        {/* brand kit v4 icon (logo/gc-icon.svg, byte-identical); kit v4 has no wordmark file */}
+        <a className="foot-brand" href={LINKS.chain} aria-label="Gully Chain home">
+          <img src="brand/logo/gc-icon.svg" width={32} height={32} alt="Gully Chain" />
         </a>
         {!minimal && (
           <nav className="foot-links" aria-label="Footer">
-            <Ext href={LINKS.chain}>GullyChain</Ext>
-            <Ext href={LINKS.explorer}>Explorer</Ext>
-            <Ext href={LINKS.faucet}>Faucet</Ext>
-            <Ext href={LINKS.docs}>Docs</Ext>
-            <Ext href={LINKS.dev}>Developers</Ext>
-            <Ext href={LINKS.chainEcosystem}>Ecosystem</Ext>
-            <Ext href={LINKS.status}>Status</Ext>
-            <Ext href={LINKS.ecosystem} newTab>
-              Gully ecosystem →
-            </Ext>
-            <Ext href={LINKS.telegram}>Telegram</Ext>
-            <Ext href={LINKS.discord}>Discord</Ext>
-            <Ext href={LINKS.x}>X</Ext>
+            {FOOT_LINKS.map((l) => (
+              <Ext key={l.label} href={l.href} newTab={l.newTab}>
+                <Icon name={l.icon} />
+                {l.label}
+              </Ext>
+            ))}
           </nav>
         )}
         <div className="foot-badges">
           <a className="gc-badge" href={LINKS.chain} aria-label="Powered by GullyChain">
-            <img
-              src="brand/badges/gullychain-powered-by-dark.svg"
-              srcSet="brand/badges/gullychain-powered-by-dark.png 1x, brand/badges/gullychain-powered-by-dark-2x.png 2x, brand/badges/gullychain-powered-by-dark-3x.png 3x"
-              width={142}
-              height={42}
-              alt="Powered by GullyChain"
-            />
+            {/* brand kit v4 badges/badge-dark.png (960x256, byte-identical) shown at 180x48 */}
+            <img src="brand/badges/badge-dark.png" width={180} height={48} alt="Powered by GullyChain" />
           </a>
           <Ext href={LINKS.gullyLabs} className="badge-link" newTab>
             <img

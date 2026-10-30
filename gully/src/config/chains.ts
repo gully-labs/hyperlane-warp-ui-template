@@ -80,7 +80,7 @@ export const CANONICAL = {
 
 export const LINKS = {
   explorer: 'https://testnet-explorer.gullychain.xyz',
-  faucet: 'https://testnet-faucet.gullychain.xyz',
+  faucet: 'https://faucet.gullychain.xyz',
   docs: 'https://docs.gullychain.xyz/bridging/',
   chain: 'https://gullychain.xyz',
   // design-gap audit 2026-10-29: every key Gully Chain surface one click from the bridge (footer + gc-switcher 1.7.0)

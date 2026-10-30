@@ -13,14 +13,18 @@ const lock = JSON.parse(readFileSync(join(app, 'src/styles/night/night.lock.json
   files: Record<string, { source: string; sha256: string }>;
 };
 
-// brand kit v3 (GULLY LABS GRAPHICS/Gully Chain/brand-kit) and the Gully Labs kit, dark-ground variants
+// GullyChain brand kit v4 (gully-ops sites/_shared/brand/kit-v4 = GULLY LABS GRAPHICS/Gully Chain/brand-kit-v4), the GN 2.0
+// favicons + bridge OG card (gully-ops sites/_shared/landing, brand/og), and the Gully Labs kit dark badges
 const KIT: Record<string, string> = {
-  'public/brand/logo/gullychain-logo-transparent.png': '42cae6fbde97046bbc7a0c3c79fe1bd0aae536f66c14a64328684063ee58f7cf',
-  'public/brand/logo/gullychain-wordmark-for-dark-bg.svg': '8b92c6af514c0b397a6e60b03dc8fa71aad8b73486b9a4b5bb86551e8e11fb9c',
-  'public/brand/badges/gullychain-powered-by-dark.svg': '8c5943234bfe9ea8797680a8a69eef06168cc136e96b15976e9ee1ac7161ec66',
-  'public/brand/badges/gullychain-powered-by-dark.png': '208c61fbe1467a14d4eafb62413259443734072e2c20e76b122ab6ea0596d29a',
-  'public/brand/badges/gullychain-powered-by-dark-2x.png': 'd29aa29b1765c8a63f1cdb9716ce2bd90fc017cee4d7cbc83dc511b2e4eef836',
-  'public/brand/badges/gullychain-powered-by-dark-3x.png': '1f796e51541d0eb6b0ea13772a02c2e660d0daeae70a63f1ef89f870f6a0196b',
+  'public/brand/logo/gc-icon.svg': '4f86d2a0c2bb1afda317f21ae7c2198564ca61241f2c48cc75df1cb87033739b',
+  'public/brand/badges/badge-dark.png': '8ca009ecda8e77d99376532634d06e67815b971119edb3f4f97f4467aa7863e9',
+  'public/favicon.svg': '4f86d2a0c2bb1afda317f21ae7c2198564ca61241f2c48cc75df1cb87033739b',
+  'public/favicon-16.png': 'be9b219a27d30b1be8e105315b3646bb239257cd874d6601dc85842bee7fd915',
+  'public/favicon-32.png': 'ed62db32d009966ca42b5fbd040f8a44850a48b0961030e11373ca9afb7b4647',
+  'public/apple-touch-icon.png': '75186c345bd0dfcad8c3396b45e647029afb2fc39d5c2b47ac2d4475cb30e239',
+  'public/android-chrome-192.png': '124e2bda6af687339242b20a0153587400c184033fb242528626bacb3451f1e1',
+  'public/android-chrome-512.png': '129e80e570c1a00ab6f49bfbeea63ad7d14dff0d6941bb32f1e6d02f7f49de56',
+  'public/og-image.png': '507fef5e1112d90010e342b3067516c790b1ca222bce194d40c4045345543d8a',
   'public/brand/badges/powered-by-gully-labs-dark.svg': '9dbacd2deedf4ea0606a9697cd74f627589a1456d7fea9b600bd81461b57c41b',
   'public/brand/badges/powered-by-gully-labs-dark.png': '49f4b242ca6fb6016f47981a82f4858534a0485375b83cf9e0bedbd86ec73134',
   'public/brand/badges/powered-by-gully-labs-dark-2x.png': '15cee9a5612d6065ddf0feea5f5373e86dca68dbf1376b72364f6b201c8672dd',
@@ -30,7 +34,8 @@ const KIT: Record<string, string> = {
 describe('Gully Chain Night (shared tokens)', () => {
   it('is locked to a gully-ops commit', () => {
     expect(lock.commit).toMatch(/^[0-9a-f]{40}$/);
-    expect(Object.keys(lock.files)).toHaveLength(6);
+    expect(Object.keys(lock.files)).toHaveLength(5);
+    expect(Object.keys(lock.files)).toContain('public/assets/fonts/inter-var.woff2');
   });
   for (const [file, { sha256 }] of Object.entries(lock.files)) {
     it(`${file} is byte-identical to gully-ops`, () => expect(sha(file)).toBe(sha256));
@@ -60,17 +65,37 @@ describe('brand kit files on the black pages', () => {
       expect(readFileSync(join(app, f), 'utf8'), f).not.toMatch(/for-light-bg|-light\.(svg|png)|-light-[23]x/);
     }
   });
-  it('dark theme-color and the dark product switcher', () => {
-    expect(readFileSync(join(app, 'index.html'), 'utf8')).toMatch(/name="theme-color" content="#05080D"/);
+  it('kit v4 only: icon + dark badge, no kit v3 logo, wordmark, badge or font', () => {
+    for (const f of ['src/ui/common/parts.tsx', 'src/ui/common/shell.tsx', 'index.html']) {
+      const s = readFileSync(join(app, f), 'utf8');
+      expect(s, f).not.toMatch(/gullychain-logo|wordmark-for|gullychain-powered-by|mascot-trader|exo2/);
+    }
+    expect(readFileSync(join(app, 'src/ui/common/shell.tsx'), 'utf8')).toContain('src="brand/logo/gc-icon.svg" width={32} height={32}');
+    const parts = readFileSync(join(app, 'src/ui/common/parts.tsx'), 'utf8');
+    expect(parts).toContain('src="brand/badges/badge-dark.png" width={180} height={48}');
+    for (const f of ['night.css', 'base.css', 'a.css', 'b.css', 'c.css']) {
+      const css = readFileSync(join(app, 'src/styles', f), 'utf8');
+      expect(css, f).not.toMatch(/Exo 2|#05080D|#0A1018|#2563FF|#00B2FA|#46FB04|#F2F5F7|#8A97A8|0,\s*178,\s*250/i);
+    }
+  });
+  it('Inter preload, absolute OG card, dark theme-color and the dark product switcher', () => {
+    const html = readFileSync(join(app, 'index.html'), 'utf8');
+    expect(html).toContain('<link rel="preload" href="/assets/fonts/inter-var.woff2"');
+    expect(html).toContain('<meta property="og:image" content="%SITE_URL%og-image.png" />');
+    expect(html).toContain('<meta property="og:image:width" content="1200" />');
+    expect(html).toContain('<meta property="og:image:height" content="630" />');
+    expect(readFileSync(join(app, 'scripts/build-staging.mjs'), 'utf8')).toContain("VITE_SITE_URL: 'https://testnet-bridge.gullychain.xyz/'");
+    expect(html).toMatch(/name="theme-color" content="#0A0F0E"/);
+    expect(readFileSync(join(app, 'public/site.webmanifest'), 'utf8')).toContain('"theme_color": "#0A0F0E"');
     expect(readFileSync(join(app, 'src/ui/common/shell.tsx'), 'utf8')).toMatch(/theme="dark"/);
   });
 });
 
 // Design-gap audit 2026-10-29: one click from the bridge to every key Gully Chain surface.
-describe('navigation reach (gc-switcher 1.7.0 + footer)', () => {
-  it('ships gc-switcher 1.7.0 (hover opens the grid; Ecosystem entry) in the dark header', () => {
+describe('navigation reach (gc-switcher 1.8.0 + footer)', () => {
+  it('ships gc-switcher 1.8.0 (kit v4 icon; hover opens the grid; Ecosystem entry) in the dark header', () => {
     const js = readFileSync(join(app, 'src/gc-switcher/gc-switcher.js'), 'utf8');
-    expect(js).toMatch(/GC_SWITCHER_VERSION = '1\.7\.0'/);
+    expect(js).toMatch(/GC_SWITCHER_VERSION = '1\.8\.0'/);
     expect(js).toMatch(/id: 'ecosystem'[^}]*https:\/\/gullychain\.xyz\/ecosystem\//);
     expect(js).toMatch(/showPopover\(\)/);
     const shell = readFileSync(join(app, 'src/ui/common/shell.tsx'), 'utf8');
@@ -78,8 +103,8 @@ describe('navigation reach (gc-switcher 1.7.0 + footer)', () => {
   });
   it('footer links the dev portal, the chain ecosystem page and status', () => {
     const parts = readFileSync(join(app, 'src/ui/common/parts.tsx'), 'utf8');
-    const foot = parts.slice(parts.indexOf('export function Footer'));
-    for (const k of ['LINKS.dev', 'LINKS.chainEcosystem', 'LINKS.status', 'LINKS.explorer', 'LINKS.faucet', 'LINKS.docs']) expect(foot).toContain(`href={${k}}`);
+    const foot = parts.slice(parts.indexOf('export const FOOT_LINKS'), parts.indexOf('export function Footer'));
+    for (const k of ['LINKS.dev', 'LINKS.chainEcosystem', 'LINKS.status', 'LINKS.explorer', 'LINKS.faucet', 'LINKS.docs']) expect(foot).toContain(`href: ${k} }`);
     const chains = readFileSync(join(app, 'src/config/chains.ts'), 'utf8');
     expect(chains).toContain("dev: 'https://dev.gullychain.xyz/'");
     expect(chains).toContain("chainEcosystem: 'https://gullychain.xyz/ecosystem/'");

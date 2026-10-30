@@ -1,6 +1,7 @@
 /*!
  * Gully Chain Night (GN) charts: window.GNCharts. gully-labs/gully-ops sites/_shared/gullychain-night/charts.js
- * Dependency-free SVG: spark, line (with area), bars, stream (live bars), count; optional hover readout (o.tip). Colours come from tokens.css; motion from components.css
+ * Dependency-free SVG: spark, line (with area), bars, stream (live bars), count; optional hover readout (o.tip). Colours come from tokens.css
+ * (GNCharts.palette / series(i): emerald, silver, amber; mint highlight; delta(node, v) colours up/down); motion from components.css
  * (off under prefers-reduced-motion). Honest data: fewer than two points draws the `empty` text, never a zero line.
  *   GNCharts.line(el, [1, 4, 3], { height: 160, area: true, label: 'TVL, 30 days' })
  *   GNCharts.bars(el, [{ label: 'Oct 28', value: 12 }], { height: 120, label: 'Transactions per day' })
@@ -147,5 +148,11 @@
     function step(t) { if (!t0) t0 = t; var k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3); node.textContent = f(from + (to - from) * e); if (k < 1) requestAnimationFrame(step); }
     requestAnimationFrame(step);
   }
-  window.GNCharts = { spark: spark, line: line, bars: bars, stream: stream, count: count };
+  // GN 2.0 palette (owner-approved, brand kit v4): emerald primary series, silver comparison, mint highlight, amber third
+  // series; green/red only for up/down deltas. Values are the tokens, so a page follows tokens.css.
+  var PALETTE = { primary: 'var(--gn-c1)', comparison: 'var(--gn-c2)', third: 'var(--gn-c3)', highlight: 'var(--gn-c-highlight)', up: 'var(--gn-up)', down: 'var(--gn-down)' };
+  var SERIES = [PALETTE.primary, PALETTE.comparison, PALETTE.third];
+  function series(i) { return SERIES[i] || PALETTE.primary; }
+  function delta(node, v) { node.classList.remove('gn-up', 'gn-down'); if (v > 0) node.classList.add('gn-up'); else if (v < 0) node.classList.add('gn-down'); }
+  window.GNCharts = { spark: spark, line: line, bars: bars, stream: stream, count: count, palette: PALETTE, series: series, delta: delta };
 })();
