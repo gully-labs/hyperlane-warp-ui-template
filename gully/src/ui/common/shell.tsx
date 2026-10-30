@@ -39,6 +39,7 @@ export function Header({ className = '' }: { className?: string }) {
               </a>
             ),
           )}
+          {open && <GullySignIn place="menu" />}
         </nav>
         <div className="top-act">
           <span className="net-pill">
