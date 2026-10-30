@@ -65,3 +65,23 @@ describe('brand kit files on the black pages', () => {
     expect(readFileSync(join(app, 'src/ui/common/shell.tsx'), 'utf8')).toMatch(/theme="dark"/);
   });
 });
+
+// Design-gap audit 2026-10-29: one click from the bridge to every key Gully Chain surface.
+describe('navigation reach (gc-switcher 1.7.0 + footer)', () => {
+  it('ships gc-switcher 1.7.0 (hover opens the grid; Ecosystem entry) in the dark header', () => {
+    const js = readFileSync(join(app, 'src/gc-switcher/gc-switcher.js'), 'utf8');
+    expect(js).toMatch(/GC_SWITCHER_VERSION = '1\.7\.0'/);
+    expect(js).toMatch(/id: 'ecosystem'[^}]*https:\/\/gullychain\.xyz\/ecosystem\//);
+    expect(js).toMatch(/showPopover\(\)/);
+    const shell = readFileSync(join(app, 'src/ui/common/shell.tsx'), 'utf8');
+    expect(shell).toMatch(/<GullyChainSwitcher current="bridge" theme="dark"/);
+  });
+  it('footer links the dev portal, the chain ecosystem page and status', () => {
+    const parts = readFileSync(join(app, 'src/ui/common/parts.tsx'), 'utf8');
+    const foot = parts.slice(parts.indexOf('export function Footer'));
+    for (const k of ['LINKS.dev', 'LINKS.chainEcosystem', 'LINKS.status', 'LINKS.explorer', 'LINKS.faucet', 'LINKS.docs']) expect(foot).toContain(`href={${k}}`);
+    const chains = readFileSync(join(app, 'src/config/chains.ts'), 'utf8');
+    expect(chains).toContain("dev: 'https://dev.gullychain.xyz/'");
+    expect(chains).toContain("chainEcosystem: 'https://gullychain.xyz/ecosystem/'");
+  });
+});

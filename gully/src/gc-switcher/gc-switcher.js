@@ -12,9 +12,12 @@
  * testnet-* subdomains; app/bridge.gullychain.xyz become mainnet on cutover day.
  * 1.6.2: the app moved to https://kre8.fun/ (owner, 2026-10-29); app.gullychain.xyz 301s there. testnet-app is not used.
  * 1.6.3: Offerwall links to https://offers.kre8.fun/ (app services moved to kre8.fun; offers.gullychain.xyz stays an alias).
+ * docs.gullychain.xyz/ecosystem/. 1.7.0 (2026-10-29): one click to every Gully Chain surface: on a desktop pointer the grid
+ * opens on hover (a non-modal popover, closes when the pointer leaves; click/Enter still opens the modal), and an
+ * Ecosystem entry (gullychain.xyz/ecosystem/) joins the grid.
  *
  * Attributes
- *   current    app | bridge | explorer | faucet | safe | verify | sentry | offers | docs | dev | status   (highlighted item + trigger label;
+ *   current    app | bridge | explorer | faucet | safe | verify | sentry | offers | docs | dev | ecosystem | status   (highlighted item + trigger label;
  *              pay and id are still accepted but no longer in the grid since 1.6.0, so the trigger reads "Apps")
  *   theme      light (default since 1.5.0, Studio Light) | dark (kit v3 night, for surfaces whose header is still dark)
  *   logo       on (default) | off: no logo, only the product-name trigger (for headers that already show the kit logo)
@@ -24,7 +27,7 @@
   'use strict';
   if (typeof window === 'undefined' || !window.customElements || window.customElements.get('gc-switcher')) return;
 
-  var GC_SWITCHER_VERSION = '1.6.3';
+  var GC_SWITCHER_VERSION = '1.7.0';
   var HOME = 'https://gullychain.xyz/';
   // Gully Chain products and services only (1.6.0): every link opens in the same tab. Other Gully products: docs ecosystem page.
   var PRODUCTS = [
@@ -38,6 +41,7 @@
     { id: 'offers', label: 'Offerwall', desc: 'Earn rewards, fund quests', href: 'https://offers.kre8.fun/', icon: '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/>' },
     { id: 'docs', label: 'Docs', desc: 'Guides and reference', href: 'https://docs.gullychain.xyz/', icon: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>' },
     { id: 'dev', label: 'Developers', desc: 'Starters and grants', href: 'https://dev.gullychain.xyz/', icon: '<path d="m8 8-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14"/>' },
+    { id: 'ecosystem', label: 'Ecosystem', desc: 'Projects on Gully Chain', href: 'https://gullychain.xyz/ecosystem/', icon: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>' },
     { id: 'status', label: 'Status', desc: 'Uptime of every service', href: 'https://status.gullylabs.xyz/', icon: '<path d="M3 12h4l3-7 4 14 3-7h4"/>' }
   ];
   // Brand kit files, byte for byte (base64 of the kit bytes, no re-export): icon/apple-touch-icon-180.png (the dark tile:
@@ -71,6 +75,7 @@
     '.trig[aria-expanded="true"]{border-color:var(--ac);background:var(--acs)}',
     'dialog{position:fixed;margin:0;padding:0;border:0;background:transparent;color:var(--tx);max-width:none;max-height:none;overflow:visible}',
     'dialog::backdrop{background:transparent}',
+    'dialog:popover-open{display:block;right:auto;bottom:auto}',
     '.p{width:440px;max-width:calc(100vw - 24px);background:var(--panel);border:1px solid var(--bd);border-radius:14px;box-shadow:var(--shadow);padding:12px;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;animation:pop .14s ease-out}',
     '@keyframes pop{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}',
     '.hd{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:2px 6px 8px}',
@@ -119,6 +124,8 @@
       return true;
     } catch (e) { return false; }
   }
+
+  var HOVER = window.matchMedia ? window.matchMedia('(hover:hover) and (pointer:fine) and (min-width:641px)') : null;
 
   function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
@@ -172,6 +179,39 @@
     root.querySelector('.x').addEventListener('click', function () { self.close(); });
     dlg.addEventListener('click', function (e) { if (e.target === dlg) self.close(); });
     dlg.addEventListener('close', function () { trig.setAttribute('aria-expanded', 'false'); });
+    // 1.7.0: hover opens the grid on a desktop pointer (one click to any surface). Non-modal popover in the top layer, so
+    // a header with overflow, transform or backdrop-filter never clips it; touch and keyboard keep the modal dialog.
+    this._peek = false;
+    if (HOVER && typeof dlg.showPopover === 'function') {
+      dlg.setAttribute('popover', 'manual');
+      var t = null;
+      var enter = function () { clearTimeout(t); if (!HOVER.matches || dlg.open || self._peek) return; t = setTimeout(function () { self.peek(); }, 90); };
+      var leave = function () { clearTimeout(t); if (self._peek) t = setTimeout(function () { self.unpeek(); }, 240); };
+      trig.addEventListener('pointerenter', enter);
+      trig.addEventListener('pointerleave', leave);
+      dlg.addEventListener('pointerenter', function () { clearTimeout(t); });
+      dlg.addEventListener('pointerleave', leave);
+    }
+  };
+  GcSwitcher.prototype.peek = function () {
+    var dlg = this._dlg;
+    if (!dlg || dlg.open || this._peek) return;
+    this.place();
+    var prev = document.activeElement;
+    try { dlg.showPopover(); } catch (e) { return; }
+    // showing a <dialog> as a popover runs the dialog focusing steps (Chromium focuses the first item and draws its
+    // focus ring); a hover peek must not move focus, so hand it back to where it was
+    var a = this.shadowRoot && this.shadowRoot.activeElement;
+    if (a && dlg.contains(a)) { a.blur(); var back = prev === this ? this._trig : prev; if (back && back !== document.body && typeof back.focus === 'function') back.focus({ preventScroll: true }); }
+    this._peek = true;
+    this._trig.setAttribute('aria-expanded', 'true');
+  };
+  GcSwitcher.prototype.unpeek = function () {
+    var dlg = this._dlg;
+    if (!dlg || !this._peek) return;
+    this._peek = false;
+    try { dlg.hidePopover(); } catch (e) { /* already hidden */ }
+    if (!dlg.open) this._trig.setAttribute('aria-expanded', 'false');
   };
 
   GcSwitcher.prototype.place = function () {
@@ -185,6 +225,7 @@
   GcSwitcher.prototype.open = function () {
     var dlg = this._dlg;
     if (!dlg || dlg.open) return;
+    this.unpeek(); // a click on the trigger while the hover grid shows turns it into the modal dialog
     this.place();
     if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
     this._trig.setAttribute('aria-expanded', 'true');
@@ -194,6 +235,7 @@
   GcSwitcher.prototype.close = function () {
     var dlg = this._dlg;
     if (!dlg) return;
+    this.unpeek();
     if (typeof dlg.close === 'function' && dlg.open) dlg.close(); else dlg.removeAttribute('open');
     this._trig.setAttribute('aria-expanded', 'false');
     this._trig.focus();

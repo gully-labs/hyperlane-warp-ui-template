@@ -83,6 +83,10 @@ export const LINKS = {
   faucet: 'https://testnet-faucet.gullychain.xyz',
   docs: 'https://docs.gullychain.xyz/bridging/',
   chain: 'https://gullychain.xyz',
+  // design-gap audit 2026-10-29: every key Gully Chain surface one click from the bridge (footer + gc-switcher 1.7.0)
+  dev: 'https://dev.gullychain.xyz/',
+  chainEcosystem: 'https://gullychain.xyz/ecosystem/',
+  status: 'https://status.gullylabs.xyz/',
   gullyLabs: 'https://gullylabs.xyz', // the Powered by Gully Labs badge only
   /** Every other Gully product is listed once, on the docs ecosystem page (owner rule 2026-10-29). */
   ecosystem: 'https://docs.gullychain.xyz/ecosystem/',
