@@ -17,8 +17,8 @@
  * opens on hover (a non-modal popover, closes when the pointer leaves; click/Enter still opens the modal), and an
  * Ecosystem entry (gullychain.xyz/ecosystem/) joins the grid.
  *
- * 1.8.0 (2026-10-30): GullyChain brand kit v4. theme="dark" is the GN 2.0 look (kit ink #0A0F0E, emerald #00C878 accent,
- * mint #2CF29A live, silver/white text, Inter) and its logo is the kit v4 icon logo/gc-icon.svg embedded byte for byte (base64
+ * 1.8.0 (2026-10-30): GullyChain brand kit v4. theme="dark" is the GN 2.0 look (owner-approved roles: charcoal #1A1F1E panel,
+ * mint #2CF29A for links, the current item and focus, deep-green highlight, #8FA09C secondary text, white text, Inter) and its logo is the kit v4 icon logo/gc-icon.svg embedded byte for byte (base64
  * of the kit file). Kit v4 has no standalone wordmark, so the dark logo is the icon alone (the trigger names the product).
  * The light theme (Studio Light surfaces not moved yet) is unchanged.
  *
@@ -67,7 +67,7 @@
   var CSS = [
     ':host{--bg:#FFFFFF;--panel:#FFFFFF;--tx:#0B0D12;--mu:#5B6270;--ac:#0A86C2;--acs:#E6F4FB;--hov:#F1F2F4;--bd:#E6E8EC;--bd2:#D5D9E0;--ok:#0B6640;--okd:#16A34A;--cur:#E6F4FB;--curi:#0A86C2;--on:#FFFFFF;--lk:#075F8C;--shadow:0 18px 48px rgba(11,13,18,.16),0 0 0 1px rgba(11,13,18,.04);--scrim:rgba(11,13,18,.28);',
     'display:inline-flex;align-items:center;gap:10px;min-width:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--tx);line-height:1.2;-webkit-tap-highlight-color:transparent}',
-    ':host([theme="dark"]){--bg:rgba(17,23,22,.6);--panel:#111716;--tx:#FFFFFF;--mu:#8A9B98;--ac:#00C878;--acs:rgba(0,200,120,.1);--hov:rgba(208,213,218,.06);--bd:rgba(208,213,218,.12);--bd2:rgba(208,213,218,.16);--ok:#2CF29A;--okd:#2CF29A;--cur:rgba(0,200,120,.12);--curi:#00C878;--on:#0A0F0E;--lk:#00C878;--shadow:0 24px 60px rgba(0,0,0,.55);--scrim:rgba(10,15,14,.6)}',
+    ':host([theme="dark"]){--bg:rgba(26,31,30,.6);--panel:#1A1F1E;--tx:#FFFFFF;--mu:#8FA09C;--ac:#2CF29A;--acs:rgba(0,91,57,.45);--hov:#232A28;--bd:rgba(102,120,117,.45);--bd2:rgba(102,120,117,.7);--ok:#2CF29A;--okd:#2CF29A;--cur:rgba(0,91,57,.45);--curi:#2CF29A;--on:#0A0F0E;--lk:#2CF29A;--shadow:0 24px 60px rgba(0,0,0,.55);--scrim:rgba(10,15,14,.6)}',
     '*,*::before,*::after{box-sizing:border-box}',
     'a{color:inherit;text-decoration:none}',
     '.logo{display:inline-flex;align-items:center;gap:8px;min-height:40px;border-radius:8px;outline-offset:3px;flex:none}',

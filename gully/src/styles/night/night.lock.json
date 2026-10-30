@@ -1,19 +1,19 @@
 {
   "repo": "gully-labs/gully-ops",
-  "ref": "origin/feat/gc-brand-v4",
-  "commit": "8a81bed4f72c0cda8e0a4ce87684385b6ff73e36",
+  "ref": "f788784080a229b4eeb18db110575139d6e51691",
+  "commit": "f788784080a229b4eeb18db110575139d6e51691",
   "files": {
     "src/styles/night/tokens.css": {
       "source": "sites/_shared/gullychain-night/tokens.css",
-      "sha256": "e31a9c7c086a3bcabef03fc6accc3eadbeea656e9fb964e27f62da4c9522b27e"
+      "sha256": "9cca4dec456bff829afb50ba698a0d8f1ee16f68493464ac3cea94eaca68dab2"
     },
     "src/styles/night/components.css": {
       "source": "sites/_shared/gullychain-night/components.css",
-      "sha256": "97aa564162f7638a93f6b979e014fea5cfb22962bffc722f877ca24d06664749"
+      "sha256": "624c073bde21426cc0465855b65ab14d0b992ca6d94ed6f5810b0fe54ce04e06"
     },
     "src/styles/night/charts.js": {
       "source": "sites/_shared/gullychain-night/charts.js",
-      "sha256": "84194bd88a6f51b6a9954b2ef1273ac861cfc439f11352d7859c2e83490e1ff6"
+      "sha256": "f238cb3cebecc2db33e71bb26fff35a97c0f66289dc8ebac58fd44d61363c4bc"
     },
     "public/assets/fonts/inter-var.woff2": {
       "source": "sites/_shared/brand/fonts/inter-var.woff2",

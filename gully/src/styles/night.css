@@ -3,7 +3,8 @@
    ink cards with a line and a dark glow, Inter (GN 2.0 = brand kit v4), signature pill buttons, emerald primary /
    deep-green secondary (the v1 token names --gn-cyan / --gn-blue keep their roles).
    No colour literals: every value is a --gn-* token. */
-html, body { background: var(--gn-bg); color: var(--gn-text); }
+html, body { background: var(--gn-bg); color: var(--gn-text-2); }   /* GN 2.0: body silver, headings white */
+h1, h2, h3, h4 { color: var(--gn-text); }
 body { font-family: var(--gn-font); font-weight: var(--gn-w-regular); }
 h1, h2, h3, b, strong, .h-card { font-weight: var(--gn-w-bold); }
 a:hover { color: var(--gn-link-hover); }
@@ -16,7 +17,7 @@ a:hover { color: var(--gn-link-hover); }
 .brand { min-height: 44px; }
 .brand img { width: 32px; height: 32px; }
 .nav-l:hover { background: var(--gn-surface-2); color: var(--gn-text); }
-.nav-on, .nav-on:hover { color: var(--gn-cyan); background: var(--gn-info-bg); }
+.nav-on, .nav-on:hover { color: var(--gn-link); background: var(--gn-info-bg); }   /* GN 2.0: active nav mint on deep green (5.6:1) */
 @media (max-width: 900px) { .nav { top: var(--gn-header-h); background: var(--gn-ink); box-shadow: var(--gn-shadow); } }
 /* phones: the 32 px kit icon, the switcher, Connect and the menu share one row, so the header Connect is icon-only (its
    label stays as the accessible name; the bridge card has the full "Connect wallet" button) */
