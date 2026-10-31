@@ -2,7 +2,7 @@
 import { CHAINS } from '../../config/chains';
 import { fmtAmount } from '../../bridge/format';
 import { Icon } from '../common/icons';
-import { ActionButton, ActivityList, AmountField, Footer, MyTransfers, QuoteDetails, RouteOptions, Sparkline, Stepper } from '../common/parts';
+import { ActionButton, ActivityList, AmountField, AssetPicker, Footer, MirrorNotice, MyTransfers, QuoteDetails, RouteOptions, Sparkline, Stepper } from '../common/parts';
 import { ChainPair, CountUp, DirectionTabs, Header } from '../common/shell';
 import { useActivity, useBridge, useHeads, type UrlOptions } from '../useBridge';
 
@@ -20,8 +20,10 @@ export function AppA({ url }: { url: UrlOptions }) {
         {b.url.ref && <span className="ref-pill">via integrator</span>}
       </div>
       <DirectionTabs b={b} />
+      <AssetPicker b={b} />
       <ChainPair b={b} />
       <AmountField b={b} />
+      <MirrorNotice b={b} />
       <h2 className="label">Route</h2>
       <RouteOptions b={b} />
       <QuoteDetails b={b} />
