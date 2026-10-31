@@ -1,6 +1,7 @@
 import { useEffect, useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
 
 import { CHAINS, LINKS, txUrl, type ChainKey } from '../../config/chains';
+import { GULLY_CORE_DOCS } from '../../config/mirrors';
 import { ago, duration, fmtAmount, short } from '../../bridge/format';
 import type { ActivityItem, StepDef, TransferRecord } from '../../bridge/types';
 import { connect, disconnect, startDiscovery, type WalletInfo } from '../../bridge/wallet';
@@ -240,7 +241,8 @@ export function AmountField({ b, big }: { b: BridgeState; big?: boolean }) {
         </span>
       </div>
       <div className="amount-meta" id="amount-bal">
-        <UsdLine v={b.amount && b.amount > 0n ? b.amount : null} />
+        {/* ETH/USD only: a Gully Core coin has no USD price here */}
+        <UsdLine v={!b.mirror && b.amount && b.amount > 0n ? b.amount : null} />
         {b.wallet.address && b.balanceFrom !== undefined ? (
           <>
             <span>
@@ -303,6 +305,64 @@ export function RouteOptions({ b }: { b: BridgeState }) {
           </button>
         );
       })}
+    </div>
+  );
+}
+
+/**
+ * Gully Warp Mirrors: which asset the card moves. Shown only when /mirrors.json listed at least one mirror route
+ * (the ETH routes stay the default; a deep link `?token=&to=` preselects a mirror).
+ */
+export function AssetPicker({ b }: { b: BridgeState }) {
+  if (!b.mirrorRoutes.length) return null;
+  return (
+    <label className="asset-pick">
+      <span>Asset</span>
+      <select value={b.mirror ? b.route.id : ''} onChange={(e) => b.selectMirror(e.target.value || undefined)} aria-label="Asset to bridge">
+        <option value="">ETH</option>
+        {b.mirrorRoutes.map((r) => (
+          <option key={r.id} value={r.id}>
+            {r.mirror!.coinSymbol} ⇄ {r.tokens[r.mirror!.chain].symbol} on {CHAINS[r.mirror!.chain].short}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+/**
+ * The label every mirror surface carries (owner wording), the provenance links and the Gully Core credit.
+ * "Bridge back" = destination -> Gully Chain, where the coin trades on its Gully Core pool.
+ */
+export function MirrorNotice({ b }: { b: BridgeState }) {
+  const m = b.mirror;
+  if (!m) return null;
+  const mirrorSym = b.route.tokens[m.chain].symbol;
+  return (
+    <div className="note mirror-note" role="status">
+      <Icon name="info" size={16} />
+      <span>
+        <b>{m.label}</b>
+        <br />
+        {b.direction === 'deposit'
+          ? `Bridge back: ${mirrorSym} on ${CHAINS[m.chain].short} returns 1:1 as ${m.coinSymbol} on GullyChain. `
+          : `${m.coinSymbol} is locked on GullyChain and ${mirrorSym} is minted 1:1 on ${CHAINS[m.chain].short}. `}
+        <Ext href={m.provenanceUrl} newTab>
+          Official mirror
+        </Ext>
+        {' · '}
+        <Ext href={m.kre8Url} newTab>
+          {m.coinSymbol} on kre8.fun
+        </Ext>
+        {' · '}
+        <Ext href={GULLY_CORE_DOCS} newTab>
+          Powered by Gully Core
+        </Ext>
+        {' · '}
+        <button className="link-btn" onClick={() => b.selectMirror(undefined)}>
+          Bridge ETH instead
+        </button>
+      </span>
     </div>
   );
 }
