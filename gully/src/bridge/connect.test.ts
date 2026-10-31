@@ -11,7 +11,7 @@ import { disconnect, openConnect, walletFromResult, walletStore, type ConnectRes
 
 const app = resolve(__dirname, '..', '..');
 const sha = (p: string) => createHash('sha256').update(readFileSync(join(app, p))).digest('hex');
-const GC_CONNECT_SHA = 'a6ba55b038ed7e7eece270ae8473472341723e05cbe999cf9f7844258812587f'; // gully-ops gc-connect.lock.json
+const GC_CONNECT_SHA = '29c387340d0151ad2c2a01277853090b2d1442907b631146169ebd6a9bba2c2e'; // gully-ops gc-connect 1.1.0 (9fa17a9b)
 
 function fakeProvider(chainId = '0x768d6') {
   return { request: vi.fn(async ({ method }: { method: string }) => (method === 'eth_chainId' ? chainId : [])), on: vi.fn() };
@@ -24,7 +24,7 @@ const result = (over: Partial<ConnectResult> = {}): ConnectResult => ({
 afterEach(() => disconnect());
 
 describe('shared Connect a wallet dialog (gc-connect)', () => {
-  it('is the byte copy of gully-ops gc-connect 1.0.0 and is bundled by the wallet UI', () => {
+  it('is the byte copy of gully-ops gc-connect 1.1.0 and is bundled by the wallet UI', () => {
     expect(sha('src/gc-connect/gc-connect.js')).toBe(GC_CONNECT_SHA);
     const parts = readFileSync(join(app, 'src/ui/common/parts.tsx'), 'utf8');
     expect(parts).toContain("import '../../gc-connect/gc-connect.js'");
@@ -33,11 +33,14 @@ describe('shared Connect a wallet dialog (gc-connect)', () => {
   it('the dialog lists Gully Wallet, then WalletConnect, then detected wallets, then install links', async () => {
     await import('../gc-connect/gc-connect.js');
     const gc = (window as unknown as { GullyConnect: { VERSION: string; INSTALL: { rdns: string }[] } }).GullyConnect;
-    expect(gc.VERSION).toBe('1.0.0');
+    expect(gc.VERSION).toBe('1.1.0');
     expect(gc.INSTALL.map((x) => x.rdns)).toEqual(['io.metamask', 'io.rabby', 'com.coinbase.wallet']);
     const src = readFileSync(join(app, 'src/gc-connect/gc-connect.js'), 'utf8');
     const r = src.slice(src.indexOf('this.render = function'));
     expect(r.indexOf("row('gully'")).toBeLessThan(r.indexOf("row('walletconnect'"));
+    // owner: the first row reads "Sign in with Gully ID" and carries data-gcc="gully-id" (the deploy post-check clicks it)
+    expect(r.slice(r.indexOf("row('gully'"), r.indexOf("row('walletconnect'"))).toContain("'Sign in with Gully ID'");
+    expect(r.slice(r.indexOf("row('gully'"), r.indexOf("row('walletconnect'"))).toContain("gcc: 'gully-id'");
     expect(r.indexOf("row('walletconnect'")).toBeLessThan(r.indexOf('Detected in this browser'));
     expect(r.indexOf('Detected in this browser')).toBeLessThan(r.indexOf('Get a wallet'));
   });
@@ -102,6 +105,49 @@ describe('kit v4 only (no kit v3 left)', () => {
       const t = readFileSync(join(app, f), 'utf8');
       expect(t, f).not.toMatch(/>\s*Gully ?Chain\s*<\/(a|span|b|strong)>/);
       expect(t, f).not.toMatch(/kre8\.fun|Launch app/);
+    }
+  });
+});
+
+// ---- every EVM connect entry point opens the shared dialog, never RainbowKit or a raw injected prompt ----
+describe('EVM connect entry points', () => {
+  it('the live bridge app (gully/) has no RainbowKit at all', () => {
+    const pkg = readFileSync(join(app, 'package.json'), 'utf8');
+    expect(pkg).not.toMatch(/rainbow-me|rainbowkit|wagmi/);
+    const bad = files('src').filter((f) => /\.tsx?$/.test(f) && /rainbowkit|openConnectModal|ConnectButton|useConnectModal/.test(readFileSync(join(app, f), 'utf8')));
+    expect(bad).toEqual([]);
+  });
+  it('only wallet.ts asks a provider for accounts, and every Connect button calls pickWallet', () => {
+    const asks = files('src').filter((f) => /\.tsx?$/.test(f) && !/\.test\./.test(f) && /eth_requestAccounts/.test(readFileSync(join(app, f), 'utf8')));
+    expect(asks).toEqual(['src/bridge/wallet.ts']);
+    const parts = readFileSync(join(app, 'src/ui/common/parts.tsx'), 'utf8');
+    const connects = [...parts.matchAll(/<Btn[^>]*>\s*Connect( wallet)?\s*<\/Btn>/g)].map((m) => m[0]);
+    expect(connects.length).toBe(2);
+    for (const c of connects) expect(c).toContain('onClick={pickWallet}');
+  });
+  it('clicking Connect opens GullyConnect (row 1 "Sign in with Gully ID")', async () => {
+    const { createElement } = await import('react');
+    const { act } = await import('react');
+    const { createRoot } = await import('react-dom/client');
+    const { WalletButton } = await import('../ui/common/parts');
+    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+    const w = window as unknown as { GullyConnect?: unknown };
+    const saved = w.GullyConnect;
+    const open = vi.fn(async () => { throw Object.assign(new Error('closed'), { code: 4001 }); });
+    w.GullyConnect = { VERSION: '1.1.0', open };
+    const host = document.body.appendChild(document.createElement('div'));
+    const root = createRoot(host);
+    try {
+      await act(async () => root.render(createElement(WalletButton, { compact: true })));
+      const btn = [...host.querySelectorAll('button')].find((b) => /Connect/.test(b.textContent || ''));
+      expect(btn).toBeTruthy();
+      await act(async () => { btn!.click(); });
+      expect(open).toHaveBeenCalledTimes(1);
+      expect(open).toHaveBeenCalledWith(expect.objectContaining({ appName: 'Gully Bridge' }));
+    } finally {
+      await act(async () => root.unmount());
+      host.remove();
+      w.GullyConnect = saved;
     }
   });
 });
