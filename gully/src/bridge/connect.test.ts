@@ -63,8 +63,15 @@ describe('shared Connect a wallet dialog (gc-connect)', () => {
     expect(walletStore.get().address).toBeUndefined();
   });
   it('a missing dialog script surfaces an error instead of failing silently', async () => {
-    await expect(openConnect(undefined)).rejects.toThrow(/GullyConnect/);
-    expect(walletStore.get().error).toMatch(/did not load/);
+    const w = window as unknown as { GullyConnect?: unknown };
+    const saved = w.GullyConnect;
+    delete w.GullyConnect; // the page without the dialog script (openConnect falls back to window.GullyConnect)
+    try {
+      await expect(openConnect()).rejects.toThrow(/GullyConnect/);
+      expect(walletStore.get().error).toMatch(/did not load/);
+    } finally {
+      w.GullyConnect = saved;
+    }
   });
 });
 
