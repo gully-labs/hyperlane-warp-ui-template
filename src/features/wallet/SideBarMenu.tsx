@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 
+import { GullySpot } from '../../components/GullySpot';
 import { ChainLogo } from '../../components/icons/ChainLogo';
 import { TokenChainIcon } from '../../components/icons/TokenChainIcon';
 import { config } from '../../consts/config';
@@ -128,6 +129,7 @@ export function SideBarMenu({
               />
             ))}
           </div>
+          <GullySpot unit="text" className="mx-3.5 mt-4" />
         </div>
       </div>
     </div>
