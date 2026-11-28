@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { GULLY_PUBLIC_RPCS } from '../config/rpc';
 import { pub, viemChain } from './clients';
 
-describe('GullyChain viem client', () => {
+describe('Gully Chain viem client', () => {
   it('reads through a fallback transport over every public RPC, in order, without ranking', () => {
     const client = pub('gullychaintestnet');
     const t = client.transport as unknown as { type: string; transports: { value?: { url?: string } }[] };

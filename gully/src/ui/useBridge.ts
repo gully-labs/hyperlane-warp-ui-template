@@ -32,7 +32,7 @@ export interface UrlOptions {
   direction?: Direction;
   route?: RouteKind;
   amount?: string;
-  /** ?chain=<registry name>: the chain on the other side of GullyChain (sepolia, basesepolia, bsctestnet, solanadevnet) */
+  /** ?chain=<registry name>: the chain on the other side of Gully Chain (sepolia, basesepolia, bsctestnet, solanadevnet) */
   chain?: ChainKey;
   /** ?token=USDC: preselect a token by symbol */
   token?: string;
@@ -378,7 +378,7 @@ export function useBridge(url: UrlOptions) {
             if (n.status === 'claimable' && t.status !== 'claimable')
               toast({ kind: 'info', title: 'Ready to claim', body: 'Your withdrawal passed the challenge period' });
             if (n.gasDrop === 'received' && t.gasDrop !== 'received')
-              toast({ kind: 'success', title: 'Gas drop received', body: 'A little ETH for fees is in your GullyChain wallet' });
+              toast({ kind: 'success', title: 'Gas drop received', body: 'A little ETH for fees is in your Gully Chain wallet' });
           }
         } catch {
           /* retry next tick */
@@ -420,7 +420,7 @@ export function useBridge(url: UrlOptions) {
   if (!option) blocker = 'No route to this chain yet';
   else if (!option.live) blocker = 'Coming soon';
   else if (amount && amount > 0n && needsRecipient && !recipientValid)
-    blocker = destIsSolana ? 'Enter a Solana address' : 'Enter a GullyChain address';
+    blocker = destIsSolana ? 'Enter a Solana address' : 'Enter a Gully Chain address';
   else if (!multichain)
     blocker = sendBlocker({
       amount,
@@ -572,7 +572,7 @@ export function useBridge(url: UrlOptions) {
       setTokenId(undefined);
       setManualKind(undefined);
       if (id) {
-        // start GullyChain -> destination; the holder check above flips to "Bridge back" if the wallet holds the mirror
+        // start Gully Chain -> destination; the holder check above flips to "Bridge back" if the wallet holds the mirror
         setDirectionRaw('withdraw');
         directionChosen.current = false;
         autoBack.current = undefined;
@@ -582,7 +582,7 @@ export function useBridge(url: UrlOptions) {
     fastRouteId: routeId,
     setFastRouteId,
     legacyHoldings,
-    /** switch the card to redeeming a retired route's token (GullyChain -> Arbitrum Sepolia, Fast lane, full balance) */
+    /** switch the card to redeeming a retired route's token (Gully Chain -> Arbitrum Sepolia, Fast lane, full balance) */
     redeemLegacy: (id: string) => {
       const h = legacyHoldings.find((x) => x.routeId === id);
       if (!h) return;

@@ -100,7 +100,7 @@ describe('kit v4 only (no kit v3 left)', () => {
     const shipped = files('public').filter((f) => /gullychain-(wordmark|logo|mascot|lockup|powered-by|secured-by)|exo2/.test(f));
     expect(shipped).toEqual([]);
   });
-  it('no typed GullyChain wordmark and no kre8.fun / "Launch app" in the shell', () => {
+  it('no typed Gully Chain wordmark and no kre8.fun / "Launch app" in the shell', () => {
     for (const f of ['src/ui/common/shell.tsx', 'src/ui/common/parts.tsx', 'index.html']) {
       const t = readFileSync(join(app, f), 'utf8');
       expect(t, f).not.toMatch(/>\s*Gully ?Chain\s*<\/(a|span|b|strong)>/);

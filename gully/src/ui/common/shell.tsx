@@ -1,84 +1,39 @@
-import { useEffect, useRef, useState } from 'react';
+import * as React from 'react';
+import { useEffect, useState } from 'react';
 
-import { CHAINS, IS_TESTNET, LINKS, type ChainKey } from '../../config/chains';
+import { CHAINS, IS_TESTNET, type ChainKey } from '../../config/chains';
 import { GullySignIn } from '../../gully-id/GullySignIn';
 import type { BridgeState } from '../useBridge';
-import { Icon, type IconName } from './icons';
-import { ChainMark, Ext, TestnetTag, WalletButton } from './parts';
-import { GullyChainSwitcher } from '../../gc-switcher/GullyChainSwitcher';
+import { Icon } from './icons';
+import { ChainMark, TestnetTag, WalletButton } from './parts';
 import { addGullyChainUsdc, USDCE } from './addUsdc';
-import { fitHeader } from './headerFit';
 import { toast } from './toasts';
-import { LABEL, NEXT, setThemePref, useTheme } from './theme';
+import { createGcNav } from '../../vendor/gc-nav/gc-nav-react.js';
 
-const NAV_ALL: { label: string; icon: IconName; href: string | null; ext?: boolean }[] = [
-  { label: 'Bridge', icon: 'bridge', href: '#bridge' },
-  { label: 'Activity', icon: 'activity', href: '#activity' },
-  { label: 'Explorer', icon: 'search', href: LINKS.explorer, ext: true },
-  { label: 'Faucet', icon: 'droplet', href: LINKS.faucet, ext: true },
-  { label: 'Docs', icon: 'book', href: LINKS.docs, ext: true },
-];
-/** no Faucet on the mainnet build (LINKS.faucet is null there) */
-export const NAV = NAV_ALL.filter((n): n is { label: string; icon: IconName; href: string; ext?: boolean } => !!n.href);
-// the one Gully Chain header action (gully-ops sites/_shared/gc-chrome.json)
-const START_BUILDING = 'https://dev.gullychain.xyz/quickstart/';
+// The one Gully Chain header and footer (gully-ops sites/_shared/gc-nav, vendored byte-identical in src/vendor/gc-nav;
+// owner 2026-11-28: the same links in the same order on every Gully Chain surface). The bridge marks Bridge active and fills
+// the action slot with Sign in with Gully ID and the wallet button; the theme button is the kit's (key gullychain-theme).
+const { GcHeader, GcFooter } = createGcNav(React);
+export const NAV_LOGO = '/brand/logo/gc-icon.svg';
 
-export function Header({ className = '' }: { className?: string }) {
-  const [open, setOpen] = useState(false);
-  const bar = useRef<HTMLDivElement>(null);
-  useEffect(() => (bar.current ? fitHeader(bar.current, ['pill', 'chip', 'labels', 'menu']) : undefined), []);
-  const [pref, theme] = useTheme();
+export function Header() {
   return (
-    <header className={`top ${className}`}>
-      <div className="top-in" ref={bar}>
-        {/* brand kit v4 icon (logo/gc-icon.svg, byte-identical) at 32 px; kit v4 has no wordmark, the switcher names the product */}
-        <a className="brand" href={LINKS.chain} aria-label="Gully Chain home">
-          <img src="brand/logo/gc-icon.svg" width={32} height={32} alt="Gully Chain" />
-        </a>
-        <GullyChainSwitcher current="bridge" theme={theme} logo="off" className="gcs" />
-        <nav className={`nav ${open ? 'nav-open' : ''}`} aria-label="Main">
-          {NAV.map((n) =>
-            n.ext ? (
-              <Ext key={n.label} href={n.href} className="nav-l">
-                <Icon name={n.icon} />
-                {n.label}
-              </Ext>
-            ) : (
-              <a key={n.label} href={n.href} className={`nav-l ${n.label === 'Bridge' ? 'nav-on' : ''}`} onClick={() => setOpen(false)}>
-                <Icon name={n.icon} />
-                {n.label}
-              </a>
-            ),
-          )}
-          {open && (
-            <Ext href={START_BUILDING} className="nav-l">
-              <Icon name="code" />
-              Start building
-            </Ext>
-          )}
-          {open && <GullySignIn place="menu" />}
-        </nav>
-        <div className="top-act">
-          <span className="net-pill">
-            <span className="live-dot" />
-            {IS_TESTNET ? 'Testnet' : 'Mainnet'}
-          </span>
-          <Ext href={START_BUILDING} className="start-b">
-            <Icon name="code" />
-            Start building
-          </Ext>
-          <GullySignIn />
-          <WalletButton compact />
-          {/* Light / Dark / System: one button, Dark first; the choice is saved on this device (public/theme-boot.js applies it before paint) */}
-          <button type="button" className="icon-btn theme-btn" data-theme-btn data-pref={pref} aria-label={`Theme: ${LABEL[pref]}. Switch to ${LABEL[NEXT[pref]]}`} title={`Theme: ${LABEL[pref]}`} onClick={() => setThemePref(NEXT[pref])}>
-            <Icon name={pref === 'dark' ? 'moon' : pref === 'light' ? 'sun' : 'monitor'} size={18} />
-          </button>
-          <button className="icon-btn menu-btn" aria-label="Menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
-            <Icon name={open ? 'x' : 'menu'} />
-          </button>
-        </div>
-      </div>
-    </header>
+    <GcHeader active="bridge" logo={NAV_LOGO} live={IS_TESTNET} menu={<GullySignIn place="menu" />}>
+      <GullySignIn />
+      <WalletButton compact />
+    </GcHeader>
+  );
+}
+
+export function Footer() {
+  return (
+    <GcFooter
+      logo={NAV_LOGO}
+      coreBadge="/brand/badges/gully-core-powered-by-dark.svg"
+      coreBadgeLight="/brand/badges/gully-core-powered-by-light-2x.png"
+      labsBadge="/brand/gully-labs-badge/powered-by-gully-labs-dark-2x.png"
+      labsBadgeLight="/brand/gully-labs-badge/powered-by-gully-labs-light-2x.png"
+    />
   );
 }
 
@@ -88,7 +43,7 @@ export function DirectionTabs({ b }: { b: BridgeState }) {
       {(['deposit', 'withdraw'] as const).map((d) => (
         <button key={d} role="tab" aria-selected={b.direction === d} className={`tab ${b.direction === d ? 'tab-on' : ''}`} onClick={() => b.setDirection(d)}>
           <Icon name={d === 'deposit' ? 'arrowDown' : 'send'} size={16} />
-          {d === 'deposit' ? 'To GullyChain' : 'To Arbitrum'}
+          {d === 'deposit' ? 'To Gully Chain' : 'To Arbitrum'}
         </button>
       ))}
     </div>

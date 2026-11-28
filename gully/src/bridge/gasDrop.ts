@@ -1,4 +1,4 @@
-// GullyGasDrop (gully-ops, GullyChain): a small ETH drop for gas on a wallet's first bridge of a non-ETH token, so the
+// GullyGasDrop (gully-ops, Gully Chain): a small ETH drop for gas on a wallet's first bridge of a non-ETH token, so the
 // user can move what they bridged. The minimum transfer value is enforced off-chain by the dropper; the UI only shows
 // eligibility = not dropped yet && today's budget covers one drop. Hidden while VITE_GAS_DROP_ADDRESS is unset.
 // Gully ID passkey smart accounts never need it: the Gully paymaster sponsors their gas.
@@ -31,7 +31,7 @@ export function dropEligible(s: GasDropState): boolean {
 }
 
 /**
- * Only deposits into GullyChain of something that is not gas there (USDC, USDT, BNB, SOL...), and the "Bridge back" of
+ * Only deposits into Gully Chain of something that is not gas there (USDC, USDT, BNB, SOL...), and the "Bridge back" of
  * a Gully Warp Mirror (the classic pair's option is native ETH, but the transfer delivers the coin, not gas).
  */
 export function dropApplies(o: { direction: 'deposit' | 'withdraw'; receive: { tokenType: string }; gateway?: boolean }, mirror = false): boolean {
@@ -52,7 +52,7 @@ export async function readGasDrop(recipient: Address, address: string = GAS_DROP
 }
 
 /**
- * The coin the gas note names: what actually ARRIVES on GullyChain. A mirror "Bridge back" runs on the classic pair,
+ * The coin the gas note names: what actually ARRIVES on Gully Chain. A mirror "Bridge back" runs on the classic pair,
  * whose option says ETH, but it delivers the Gully Core coin (TFROG), so the note must never say "use your ETH".
  */
 export function arrivingSymbol(b: {

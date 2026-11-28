@@ -6,7 +6,7 @@ const text = (f: string) => readFileSync(new URL(`../${f}`, import.meta.url), 'u
 describe('first paint', () => {
   it('the entry loads styles and nothing else before paint', () => {
     const main = text('src/main.tsx');
-    expect(main.split(/\r?\n/).filter((l) => /^import /.test(l)).every((l) => l.startsWith("import './styles/"))).toBe(true);
+    expect(main.split(/\r?\n/).filter((l) => /^import /.test(l)).every((l) => l.startsWith("import './styles/") || l === "import './vendor/gc-nav/gc-nav.css';")).toBe(true);
     expect(main).toContain("import('./boot')");
   });
   it('the landing page takes over its HTML; anything else renders fresh', () => {

@@ -34,10 +34,10 @@ export interface BackingPoint {
 export interface Backing {
   routeId: string;
   symbol: string;
-  /** native: HypNative on GullyChain too (liquidity on both sides); synthetic: a minted token on GullyChain */
+  /** native: HypNative on Gully Chain too (liquidity on both sides); synthetic: a minted token on Gully Chain */
   kind: 'native' | 'synthetic';
   legacy: boolean;
-  supply: bigint; // synthetic: supply on GullyChain (totalSupply); native: ETH held by the GullyChain router
+  supply: bigint; // synthetic: supply on Gully Chain (totalSupply); native: ETH held by the Gully Chain router
   locked: bigint; // ETH held by the Arbitrum Sepolia router
   series: BackingPoint[];
 }
@@ -124,7 +124,7 @@ export async function loadStats(): Promise<BridgeStats> {
     }),
   );
 
-  // Canonical: deposits (bridge + inbox) on Arbitrum Sepolia, withdrawals on GullyChain
+  // Canonical: deposits (bridge + inbox) on Arbitrum Sepolia, withdrawals on Gully Chain
   const [delivered, inboxLogs, l2l1] = await Promise.all([
     pub(PARENT).getLogs({ address: CANONICAL.bridge, event: messageDeliveredEvent, fromBlock: parentFrom, toBlock: 'latest' }),
     pub(PARENT).getLogs({ address: CANONICAL.inbox, event: inboxMessageDeliveredEvent, fromBlock: parentFrom, toBlock: 'latest' }),

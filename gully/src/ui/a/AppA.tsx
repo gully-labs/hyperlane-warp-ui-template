@@ -1,9 +1,9 @@
-// Direction A: GullyChain "Terminal" (black ground, chart-led header, stat tiles, ticker, night cards).
+// Direction A: Gully Chain "Terminal" (black ground, chart-led header, stat tiles, ticker, night cards).
 import { CHAINS } from '../../config/chains';
 import { fmtAmount } from '../../bridge/format';
 import { Icon } from '../common/icons';
-import { ActionButton, ActivityList, AmountField, AssetPicker, Footer, MyTransfers, QuoteDetails, RouteOptions, Sparkline, Stepper, WarpMirrorNotice } from '../common/parts';
-import { ChainPair, CountUp, DirectionTabs, Header, AddUsdcRow } from '../common/shell';
+import { ActionButton, ActivityList, AmountField, AssetPicker, EmbedFooter, MyTransfers, QuoteDetails, RouteOptions, Sparkline, Stepper, WarpMirrorNotice } from '../common/parts';
+import { ChainPair, CountUp, DirectionTabs, Header, AddUsdcRow, Footer } from '../common/shell';
 import { useActivity, useBridge, useHeads, type UrlOptions } from '../useBridge';
 
 export function AppA({ url }: { url: UrlOptions }) {
@@ -37,7 +37,7 @@ export function AppA({ url }: { url: UrlOptions }) {
     return (
       <div className="embed a">
         {card}
-        <Footer minimal />
+        <EmbedFooter />
       </div>
     );
 

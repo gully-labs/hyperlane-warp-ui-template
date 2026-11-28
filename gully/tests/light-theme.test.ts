@@ -94,10 +94,9 @@ describe('theme choice', () => {
     expect(html).not.toMatch(/<script>/);
     expect(html.indexOf('/theme-boot.js')).toBeLessThan(html.indexOf('/src/main.tsx'));
   });
-  it('the header has the button and the product switcher follows the theme', () => {
-    const shell = text('src/ui/common/shell.tsx');
-    expect(shell).toContain('data-theme-btn');
-    expect(shell).toContain('theme={theme}');
-    expect(shell).toContain('setThemePref(NEXT[pref])');
+  it('the header has the theme button (shared gc-nav kit) and the app follows its choice', () => {
+    expect(text('src/vendor/gc-nav/gc-nav.js')).toContain("'data-gcn-theme'");
+    expect(text('src/vendor/gc-nav/gc-nav.js')).toContain("const KEY = 'gullychain-theme'");
+    expect(text('src/ui/common/theme.ts')).toContain("window.addEventListener('gcn:theme'");
   });
 });

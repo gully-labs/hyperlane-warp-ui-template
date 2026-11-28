@@ -65,7 +65,7 @@ export function Empty({ children }: { children: ReactNode }) {
 }
 
 /** stacked bars per hour: Fast vs Canonical volume */
-export function StackedBars({ data }: { data: { t: number; fast: number; canonical: number; count: number }[] }) {
+export function StackedBars({ data, axis = ['48h ago', '24h', 'now'], unit = 'hour' }: { data: { t: number; fast: number; canonical: number; count: number }[]; axis?: [string, string, string]; unit?: 'hour' | 'day' }) {
   const [hover, setHover] = useState<number>();
   const W = 600;
   const H = 150;
@@ -73,10 +73,10 @@ export function StackedBars({ data }: { data: { t: number; fast: number; canonic
   const bw = W / data.length;
   const y = (v: number) => (v > 0 ? Math.max(2, (v / max) * (H - 18)) : 0); // nonzero hours stay visible
   const total = data.reduce((a, d) => a + d.fast + d.canonical, 0);
-  if (!total) return <Empty>No ETH bridged in the last 48 hours yet. The chart fills in as transfers land.</Empty>;
+  if (!total) return <Empty>No ETH bridged in this window yet. The chart fills in as transfers land.</Empty>;
   return (
     <div className="chart" onMouseLeave={() => setHover(undefined)}>
-      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="bars" role="img" aria-label="ETH bridged per hour, Fast and Canonical">
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="bars" role="img" aria-label={`ETH bridged per ${unit}, Fast and Cheapest`}>
         <line x1="0" x2={W} y1={H - 0.5} y2={H - 0.5} className="axis" />
         {data.map((d, i) => {
           const hf = y(d.fast);
@@ -91,22 +91,22 @@ export function StackedBars({ data }: { data: { t: number; fast: number; canonic
         })}
       </svg>
       <div className="xaxis">
-        <span>48h ago</span>
-        <span>24h</span>
-        <span>now</span>
+        <span>{axis[0]}</span>
+        <span>{axis[1]}</span>
+        <span>{axis[2]}</span>
       </div>
       {hover !== undefined && (
         <Tip x={hover * bw + bw / 2} y={4} w={W}>
-          <b>{new Date(data[hover].t).toLocaleString('en-GB', { weekday: 'short', hour: '2-digit', minute: '2-digit' })}</b>
+          <b>{new Date(data[hover].t).toLocaleString('en-GB', unit === 'day' ? { weekday: 'short', day: 'numeric', month: 'short' } : { weekday: 'short', hour: '2-digit', minute: '2-digit' })}</b>
           <span>Fast <Money v={data[hover].fast} inline /></span>
-          <span>Canonical <Money v={data[hover].canonical} inline /></span>
+          <span>Cheapest <Money v={data[hover].canonical} inline /></span>
           <span>{data[hover].count} transfers</span>
         </Tip>
       )}
       <table className="sr">
-        <caption>ETH bridged per hour</caption>
+        <caption>ETH bridged per {unit}</caption>
         <thead>
-          <tr><th>Hour</th><th>Fast ETH</th><th>Canonical ETH</th><th>Transfers</th></tr>
+          <tr><th>{unit === 'day' ? 'Day' : 'Hour'}</th><th>Fast ETH</th><th>Cheapest ETH</th><th>Transfers</th></tr>
         </thead>
         <tbody>
           {data.filter((d) => d.count).map((d) => (
@@ -152,7 +152,7 @@ export function DeliveryChart({ points }: { points: { kind: 'fast' | 'canonical'
       </svg>
       {hover !== undefined && (
         <Tip x={x(points[hover].t)} y={4} w={W}>
-          <b>{points[hover].kind === 'fast' ? 'Fast' : 'Canonical'}</b>
+          <b>{points[hover].kind === 'fast' ? 'Fast' : 'Cheapest'}</b>
           <span>{duration(points[hover].s)} to deliver</span>
           <span>{new Date(points[hover].t).toLocaleString('en-GB', { weekday: 'short', hour: '2-digit', minute: '2-digit' })}</span>
         </Tip>

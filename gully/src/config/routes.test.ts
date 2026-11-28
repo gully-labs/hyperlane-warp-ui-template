@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { DEFAULT_FAST_ROUTE_ID, FAST_ROUTES, LEGACY_ROUTES, isMirrorRoute, routeFor } from './routes';
 
 describe('fast routes', () => {
-  it('defaults to the native ETH route (gas ETH on GullyChain)', () => {
+  it('defaults to the native ETH route (gas ETH on Gully Chain)', () => {
     const d = FAST_ROUTES.find((r) => r.id === DEFAULT_FAST_ROUTE_ID)!;
     expect(d.legacy).toBeFalsy();
     expect(d.tokens.gullychaintestnet.tokenType).toBe('native');
@@ -22,7 +22,7 @@ describe('fast routes', () => {
     expect(routeFor('withdraw').id).toBe(DEFAULT_FAST_ROUTE_ID);
   });
 
-  it('flags routes whose GullyChain token is minted on Gully Chain (synthetic) as mirror routes', () => {
+  it('flags routes whose Gully Chain token is minted on Gully Chain (synthetic) as mirror routes', () => {
     for (const r of FAST_ROUTES) {
       const synthetic = r.tokens.gullychaintestnet.tokenType !== 'native';
       expect(isMirrorRoute(r), r.id).toBe(synthetic);

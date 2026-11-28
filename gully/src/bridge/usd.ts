@@ -7,7 +7,7 @@
  * 1. Gully's ETH/USD endpoint `GET /price/eth`: same-origin on a gullychain.xyz host, else https://gullychain.xyz
  *    (server-side cache of 60 s, CORS *).
  * 2. RedStone's public price API (redstone-primary-prod, the data GullyPriceFeed verifies on chain).
- * 3. GullyPriceFeed on GullyChain, read through the GullyChain RPC fallback transport.
+ * 3. GullyPriceFeed on Gully Chain, read through the Gully Chain RPC fallback transport.
  * Cached for 60 s and refreshed every 60 s while the page is open.
  */
 import { useSyncExternalStore } from 'react';

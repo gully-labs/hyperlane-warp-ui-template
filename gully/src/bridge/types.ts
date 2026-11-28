@@ -3,7 +3,7 @@ import type { Address, Hash } from 'viem';
 import type { ChainKey } from '../config/chains';
 
 export type RouteKind = 'fast' | 'canonical';
-export type Direction = 'deposit' | 'withdraw'; // deposit: Arbitrum Sepolia -> GullyChain
+export type Direction = 'deposit' | 'withdraw'; // deposit: Arbitrum Sepolia -> Gully Chain
 
 export interface QuoteRequest {
   kind: RouteKind;
@@ -13,7 +13,7 @@ export interface QuoteRequest {
   sender?: string;
   /** EVM address, or a base58 Solana address when the destination is Solana */
   recipient?: string;
-  /** the chain on the other side of GullyChain (default Arbitrum Sepolia, the classic lanes) */
+  /** the chain on the other side of Gully Chain (default Arbitrum Sepolia, the classic lanes) */
   remote?: ChainKey;
   /** Integrator address from ?ref=. The local client records it; the GullyBridgeRouter SDK pays it a fee. */
   ref?: Address;
