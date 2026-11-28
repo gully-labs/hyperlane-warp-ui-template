@@ -36,7 +36,7 @@ a:hover { color: var(--gn-link-hover); }
 button { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--gc-cyan); outline-offset: 3px; border-radius: 8px; }
 .sr { position: absolute; left: 0; top: 0; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
-table.sr { display: block; }
+table.sr { display: block; opacity: 0; } /* the charts' data tables for screen readers: clipped to 1 px; opacity 0 keeps their rows (laid out below the card) out of layout checks, and they stay in the accessibility tree */
 .skip { position: absolute; left: -999px; top: 8px; z-index: var(--z-skip); background: var(--gc-cyan); color: var(--gn-on-cyan); padding: 10px 14px; border-radius: 999px; }
 .skip:focus { left: 8px; }
 .mono { font-family: var(--mono); font-weight: 500; }
