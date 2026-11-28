@@ -76,7 +76,7 @@ describe('mainnet config (mainnet.json + VITE_MAINNET_*)', () => {
 });
 
 describe('testnet build (default): unchanged', () => {
-  it('keeps Arbitrum Sepolia + GullyChain Testnet, the testnet RPCs, the faucet and no caps', async () => {
+  it('keeps Arbitrum Sepolia + Gully Chain Testnet, the testnet RPCs, the faucet and no caps', async () => {
     const t = await load({});
     expect(t.NETWORK).toBe('testnet');
     expect(t.CHAINS.arbitrumsepolia.id).toBe(421614);

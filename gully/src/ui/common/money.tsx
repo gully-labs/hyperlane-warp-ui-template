@@ -57,6 +57,19 @@ export function UsdNote() {
 /** Any bridged token: ETH (18 decimals) goes through Money (USD first); other tokens show their own amount only. */
 export function TokenAmount({ v, decimals = 18, symbol, inline = false }: { v: bigint; decimals?: number; symbol: string; inline?: boolean }) {
   if (decimals === 18 && symbol === 'ETH') return <Money v={v} symbol={symbol} inline={inline} />;
+  // USDC and USDC.e are dollars 1:1: USD first, the token amount after it (owner 2026-11-28, "USD first")
+  if (/^USDC(\.e)?$/.test(symbol)) {
+    const usd = Number(v) / 10 ** decimals;
+    return (
+      <span className={`money ${inline ? 'money-in' : ''}`.trim()}>
+        <b className="num">{fmtUsd(usd)}</b>
+        <small className="money-eth">
+          {inline ? '· ' : ''}
+          {fmtAmount(v, decimals, 6)} {symbol}
+        </small>
+      </span>
+    );
+  }
   return (
     <span className="money">
       <b className="num">

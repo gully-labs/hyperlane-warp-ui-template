@@ -127,7 +127,7 @@ export function stepsFor(
   if (direction === 'deposit')
     return [
       { id: 'send', label: 'Send', hint: `Sign on ${fromName}`, chain: from, user: true },
-      { id: 'relay', label: 'Sequenced', hint: 'GullyChain reads the deposit', chain: to, user: false },
+      { id: 'relay', label: 'Sequenced', hint: 'Gully Chain reads the deposit', chain: to, user: false },
       { id: 'deliver', label: 'Delivered', hint: `Gas ETH on ${toName}`, chain: to, user: false },
     ];
   return [
@@ -515,7 +515,7 @@ async function laneQuote(req: QuoteRequest): Promise<Quote> {
   const eta = req.direction === 'deposit' ? DEPOSIT_ETA : await withdrawEtaSeconds();
   if (req.direction === 'withdraw')
     notes.push(`After the challenge period, come back and claim on ${CHAINS[PARENT].name} (one more transaction).`);
-  else notes.push('You receive native ETH for gas on GullyChain.');
+  else notes.push('You receive native ETH for gas on Gully Chain.');
   return {
     req,
     from,
@@ -636,14 +636,14 @@ export async function deliveryTx(chain: ChainKey, messageId: Hash, fromBlock?: s
   return undefined;
 }
 
-/** Solana -> GullyChain: the connected Solana wallet signs; the message id comes from the mailbox's dispatch log. */
+/** Solana -> Gully Chain: the connected Solana wallet signs; the message id comes from the mailbox's dispatch log. */
 async function executeFromSolana(q: Quote, onStep: (u: StepUpdate) => void): Promise<TransferRecord> {
   const req = q.req;
   const lane = resolveLane(req);
   const sender = req.sender;
   if (!sender) throw new Error('Connect a Solana wallet first');
   const recipient = req.recipient;
-  if (!recipient || !isAddress(recipient)) throw new Error('Enter the GullyChain address that receives the tokens');
+  if (!recipient || !isAddress(recipient)) throw new Error('Enter the Gully Chain address that receives the tokens');
   const sol = await import('../solana/sealevelClient');
   const destHead = await pub(q.to).getBlockNumber().catch(() => undefined);
   onStep({ step: 'send', state: 'active' });
@@ -995,9 +995,9 @@ export interface Balances {
   childEth?: bigint;
   /** Gully Warp Mirror routes: the wallet's mirror balance on the destination chain (what "Bridge back" sends) */
   mirrorToken?: bigint;
-  /** what the Fast route sends from GullyChain: native ETH (the default route) or the route's token (gETH / hypETH) */
+  /** what the Fast route sends from Gully Chain: native ETH (the default route) or the route's token (gETH / hypETH) */
   fastToken?: bigint;
-  /** balances of retired routes' GullyChain tokens (gETH, hypETH) by route id, so the UI can offer a redeem */
+  /** balances of retired routes' Gully Chain tokens (gETH, hypETH) by route id, so the UI can offer a redeem */
   legacy?: Record<string, bigint>;
 }
 
@@ -1030,7 +1030,7 @@ async function balances(address: Address, routeId?: string): Promise<Balances> {
   LEGACY_ROUTES.forEach((r, i) => {
     if (legacyList[i] !== undefined) legacy[r.id] = legacyList[i]!;
   });
-  // a native GullyChain router sends the wallet's own gas ETH
+  // a native Gully Chain router sends the wallet's own gas ETH
   const fastToken = g.tokenType === 'native' ? childEth : token;
   return { parentEth, childEth, fastToken, legacy, mirrorToken };
 }

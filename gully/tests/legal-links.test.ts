@@ -31,17 +31,22 @@ describe('Gully Chain Terms and Privacy on the bridge', () => {
     expect(main.indexOf('location.replace(legalTo)')).toBeLessThan(main.indexOf('createRoot('));
   });
 
-  for (const minimal of [false, true]) {
-    it(`the ${minimal ? 'minimal (embed) ' : ''}footer links both pages in a new tab`, async () => {
-      const { Footer } = await import('../src/ui/common/parts');
-      const html = renderToStaticMarkup(createElement(Footer, { minimal }));
-      const nav = html.slice(html.indexOf('<nav class="foot-legal" aria-label="Legal">'));
-      expect(nav.length).toBeLessThan(html.length);
-      expect(nav).toMatch(newTab(TERMS));
-      expect(nav).toMatch(newTab(PRIVACY));
-      expect(nav).toMatch(/<svg\b[\s\S]*?Terms<\/a>/);
-    }, SLOW);
-  }
+  it('the embed footer links both pages in a new tab', async () => {
+    const { EmbedFooter } = await import('../src/ui/common/parts');
+    const html = renderToStaticMarkup(createElement(EmbedFooter));
+    const nav = html.slice(html.indexOf('<nav class="foot-legal" aria-label="Legal">'));
+    expect(nav.length).toBeLessThan(html.length);
+    expect(nav).toMatch(newTab(TERMS));
+    expect(nav).toMatch(newTab(PRIVACY));
+    expect(nav).toMatch(/<svg[\s\S]*?Terms<\/a>/);
+  }, SLOW);
+
+  it('the page footer (the shared Gully Chain footer) links both pages', async () => {
+    const { Footer } = await import('../src/ui/common/shell');
+    const html = renderToStaticMarkup(createElement(Footer));
+    expect(html).toMatch(/<a href="https:\/\/gullychain\.xyz\/terms\/"[^>]*>[\s\S]*?Terms<\/a>/);
+    expect(html).toMatch(/<a href="https:\/\/gullychain\.xyz\/privacy\/"[^>]*>[\s\S]*?Privacy<\/a>/);
+  }, SLOW);
 
   it('the consent line under the transfer button links both pages in a new tab', async () => {
     const { ConsentLine } = await import('../src/ui/common/parts');

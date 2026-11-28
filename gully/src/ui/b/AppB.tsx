@@ -7,9 +7,9 @@ import type { ActivityItem } from '../../bridge/types';
 import { Icon } from '../common/icons';
 import { Money, UsdLine, UsdNote } from '../common/money';
 import { asEth, ethN } from '../../bridge/usd';
-import { ActionButton, ActivityList, AmountField, AssetPicker, ChainMark, Footer, LegacyNotice, MirrorNotice, MyTransfers, QuoteDetails, Stepper, WarpMirrorNotice } from '../common/parts';
+import { ActionButton, ActivityList, AmountField, AssetPicker, ChainMark, EmbedFooter, LegacyNotice, MirrorNotice, MyTransfers, QuoteDetails, Stepper, WarpMirrorNotice } from '../common/parts';
 import { ChainPicker, GasDropNote, LaneChoice, RecipientField, TokenPicker } from '../common/multichain';
-import { Header, AddUsdcRow } from '../common/shell';
+import { Header, AddUsdcRow, Footer } from '../common/shell';
 import { useActivity, useBridge, useHeads, type BridgeState, type UrlOptions } from '../useBridge';
 
 export function AppB({ url }: { url: UrlOptions }) {
@@ -23,7 +23,7 @@ export function AppB({ url }: { url: UrlOptions }) {
     return (
       <div className="embed b">
         {card}
-        <Footer minimal />
+        <EmbedFooter />
       </div>
     );
 
@@ -32,7 +32,7 @@ export function AppB({ url }: { url: UrlOptions }) {
       <a className="skip" href="#bridge">
         Skip to the bridge
       </a>
-      <Header className="top-b" />
+      <Header />
       <main>
         <section className="hero-b" aria-label="Route">
           <RouteVisual b={b} items={act.items} heads={heads} />
@@ -143,7 +143,7 @@ export function RouteVisual({ b, items, heads }: { b: BridgeState; items?: Activ
       </div>
       <div className="rv-node rv-node-r">
         <ChainMark chain="gullychaintestnet" size={72} />
-        <b>GullyChain</b>
+        <b>Gully Chain</b>
         <small className="mono">#{heads.gullychaintestnet.block?.toString() ?? '…'}</small>
       </div>
     </div>

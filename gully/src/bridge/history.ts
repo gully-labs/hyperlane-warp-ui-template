@@ -62,7 +62,7 @@ export function isOpen(t: TransferRecord) {
   return !FINAL.includes(t.status);
 }
 
-/** the chain on the other side of GullyChain */
+/** the chain on the other side of Gully Chain */
 export function remoteOf(t: Pick<TransferRecord, 'from' | 'to'>): ChainKey {
   return t.from === CHILD ? t.to : t.from;
 }

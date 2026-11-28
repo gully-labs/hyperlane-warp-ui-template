@@ -4,7 +4,7 @@ import { GULLY_PUBLIC_RPCS, GULLY_WALLET_RPCS, gullyPriceUrl, gullyRpcList, isGu
 
 const bridge = { origin: 'https://testnet-bridge.gullychain.xyz', hostname: 'testnet-bridge.gullychain.xyz' };
 
-describe('GullyChain RPC fallback list', () => {
+describe('Gully Chain RPC fallback list', () => {
   it('puts same-origin /rpc first on a gullychain.xyz host, then the public list in contract order', () => {
     expect(gullyRpcList(undefined, bridge)).toEqual([
       'https://testnet-bridge.gullychain.xyz/rpc',

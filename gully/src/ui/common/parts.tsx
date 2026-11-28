@@ -72,7 +72,7 @@ export function Ext({ href, children, className, newTab, testId }: { href: strin
  *  (@hyperlane-xyz/registry 26.2.0 chains/<name>/logo.svg, file named after the chain). Decorative by default (the
  *  chain's name is written next to it); pass alt when it stands alone. badge: the file with the small amber testnet
  *  corner badge, for places that show no "Testnet" text (registry logos have no badged variant). A file that fails to
- *  load falls back to the chain's short text mark. GullyChain uses the brand kit v4 icon (brand/logo/gc-icon.svg,
+ *  load falls back to the chain's short text mark. Gully Chain uses the brand kit v4 icon (brand/logo/gc-icon.svg,
  *  byte-identical; its hexagon sits inside the round mask, so nothing is cropped) until the chain-logo pack moves to kit v4. */
 const CHAIN_LOGO: Record<ChainKey, { mark: string; badged: string; text: string }> = {
   gullychaintestnet: { mark: 'brand/logo/gc-icon.svg', badged: 'brand/logo/gc-icon.svg', text: 'G' },
@@ -263,7 +263,7 @@ export function RouteOptions({ b }: { b: BridgeState }) {
             </span>
             <span className="route-main">
               <b>
-                {k === 'fast' ? 'Fast' : 'Canonical'}
+                {k === 'fast' ? 'Fast' : 'Cheapest'}
                 {rec && <em className="badge-rec">Best</em>}
               </b>
               <small>
@@ -322,8 +322,8 @@ export function WarpMirrorNotice({ b }: { b: BridgeState }) {
         <b>{m.label}</b>
         <br />
         {b.direction === 'deposit'
-          ? `Bridge back: ${mirrorSym} on ${CHAINS[m.chain].short} returns 1:1 as ${m.coinSymbol} on GullyChain. `
-          : `${m.coinSymbol} is locked on GullyChain and ${mirrorSym} is minted 1:1 on ${CHAINS[m.chain].short}. `}
+          ? `Bridge back: ${mirrorSym} on ${CHAINS[m.chain].short} returns 1:1 as ${m.coinSymbol} on Gully Chain. `
+          : `${m.coinSymbol} is locked on Gully Chain and ${mirrorSym} is minted 1:1 on ${CHAINS[m.chain].short}. `}
         <Ext href={m.provenanceUrl} newTab>
           Official mirror
         </Ext>
@@ -351,7 +351,7 @@ export function WarpMirrorNotice({ b }: { b: BridgeState }) {
 
 /**
  * Retired Fast routes (gETH, hypETH): never offered for deposits. A wallet that still holds one of their tokens gets a
- * one-click redeem (GullyChain -> Arbitrum Sepolia on that route), so nothing bridged earlier is ever stranded.
+ * one-click redeem (Gully Chain -> Arbitrum Sepolia on that route), so nothing bridged earlier is ever stranded.
  */
 export function LegacyNotice({ b }: { b: BridgeState }) {
   if (b.route.legacy)
@@ -386,7 +386,7 @@ export function LegacyNotice({ b }: { b: BridgeState }) {
 }
 
 /**
- * Mirror routes (the GullyChain token is minted on Gully Chain, not native): one line + the official compact
+ * Mirror routes (the Gully Chain token is minted on Gully Chain, not native): one line + the official compact
  * "Powered by Gully Core" mark (brand kit v4 badges/gully-core-mark-dark.*, 146x24, byte-identical, never restyled).
  */
 export function MirrorNotice({ b }: { b: BridgeState }) {
@@ -562,7 +562,7 @@ export function ActivityList({ items, error, limit = 8, preview }: { items?: Act
         <li key={i.key} className="feed-row feed-in">
           <span className={`feed-kind feed-${i.kind}`}>
             <Icon name={i.kind === 'fast' ? 'zap' : 'shield'} size={14} />
-            {i.kind === 'fast' ? 'Fast' : 'Canonical'}
+            {i.kind === 'fast' ? 'Fast' : 'Cheapest'}
           </span>
           <span className="feed-dir">
             <ChainMark chain={i.direction === 'deposit' ? 'arbitrumsepolia' : 'gullychaintestnet'} size={16} />
@@ -587,14 +587,28 @@ export function ActivityList({ items, error, limit = 8, preview }: { items?: Act
   );
 }
 
+/** The user's transfers on this device (wallet-filtered when one is connected), newest first. */
+export function myTransfers(b: BridgeState) {
+  const mine = [b.wallet.address, b.sol.address].filter(Boolean).map((a) => a!.toLowerCase());
+  return b.transfers.filter((t) => !mine.length || mine.includes(t.sender.toLowerCase()) || mine.includes(t.recipient.toLowerCase()));
+}
+/** The newest Fast-lane delivery on Gully Chain: the "bridge arrival" the Bridge & Earn attester matches (message id). */
+export const earnableOf = (list: TransferRecord[]) => list.find((t) => t.status === 'delivered' && t.kind === 'fast' && t.to === CHILD);
+
 export function MyTransfers({ b }: { b: BridgeState }) {
   const [all, setAll] = useState(false);
-  const mine = [b.wallet.address, b.sol.address].filter(Boolean).map((a) => a!.toLowerCase());
-  const list = b.transfers.filter((t) => !mine.length || mine.includes(t.sender.toLowerCase()) || mine.includes(t.recipient.toLowerCase()));
+  const list = myTransfers(b);
   if (!list.length) return null;
+  const earn = earnableOf(list);
   return (
-    <section className="mine" aria-label="Your transfers">
-      <h3 className="label">Your transfers</h3>
+    <section className="card mine" aria-label="Your transfers">
+      <div className="card-head">
+        <h2 className="label">Your transfers</h2>
+        <small className="muted">on this device</small>
+      </div>
+      {/* Bridge & Earn: shown ONCE (owner 2026-11-28), for the newest Fast delivery on Gully Chain, never inside each receipt;
+          it carries that delivery's Hyperlane message id and shows only while the program is live */}
+      {earn && <BridgeEarnDelivered messageId={earn.messageId} />}
       <ul>
         {list.slice(0, all ? 50 : 5).map((t) => (
           <li key={t.id} className={`mine-row mine-${t.status}`}>
@@ -612,12 +626,12 @@ export function MyTransfers({ b }: { b: BridgeState }) {
                 <TokenAmount v={BigInt(t.amount)} decimals={t.decimals ?? 18} symbol={t.sendSymbol} inline />
               </b>
               <span className="mine-status">{statusLabel(t)}</span>
+              <time className="mine-when" dateTime={new Date(t.createdAt).toISOString()} title={new Date(t.createdAt).toLocaleString()}>
+                {shortDate(t.createdAt)}
+              </time>
             </div>
             <Stepper defs={stepDefsOf(t)} state={recordSteps(t)} compact />
             <TransferLinks t={t} />
-            {/* Bridge & Earn: a Fast-lane delivery on Gully Chain (t.to === 'gullychaintestnet') is the "bridge arrival"
-                the rewards attester matches; the notice carries the Hyperlane message id and shows only while live */}
-            {t.status === 'delivered' && t.kind === 'fast' && t.to === CHILD && <BridgeEarnDelivered messageId={t.messageId} />}
             {t.status === 'challenge' && t.direction === 'withdraw' && (
               <p className="mine-note">{claimReadyLine(t)}</p>
             )}
@@ -636,6 +650,13 @@ export function MyTransfers({ b }: { b: BridgeState }) {
       )}
     </section>
   );
+}
+
+/** "14:05" today, "27 Nov" this year, "27 Nov 2025" before: a short date for a transfer row. */
+export function shortDate(ms: number, now = Date.now()): string {
+  const d = new Date(ms), n = new Date(now);
+  if (d.toDateString() === n.toDateString()) return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleDateString('en-GB', d.getFullYear() === n.getFullYear() ? { day: 'numeric', month: 'short' } : { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 /** When a withdrawal in its challenge period can be claimed, in plain words (from when it was sent + the wait). */
@@ -686,7 +707,7 @@ function stepDefsOf(t: TransferRecord): StepDef[] {
   if (t.direction === 'deposit')
     return [
       { id: 'send', label: 'Send', hint: CHAINS[t.from].short, chain: t.from, user: true },
-      { id: 'relay', label: 'Sequenced', hint: 'GullyChain reads it', chain: t.to, user: false },
+      { id: 'relay', label: 'Sequenced', hint: 'Gully Chain reads it', chain: t.to, user: false },
       { id: 'deliver', label: 'Delivered', hint: CHAINS[t.to].short, chain: t.to, user: false },
     ];
   return [
@@ -695,23 +716,6 @@ function stepDefsOf(t: TransferRecord): StepDef[] {
     { id: 'claim', label: 'Claim', hint: CHAINS[t.to].short, chain: t.to, user: true },
   ];
 }
-
-/** Footer links: every one carries a Lucide icon next to its label (owner rule 2026-10-30, icons on the whole stack). */
-export const FOOT_LINKS_ALL: { label: string; icon: IconName; href: string | null; newTab?: boolean }[] = [
-  { label: 'GullyChain', icon: 'house', href: LINKS.chain },
-  { label: 'Explorer', icon: 'search', href: LINKS.explorer },
-  { label: 'Faucet', icon: 'droplet', href: LINKS.faucet },
-  { label: 'Docs', icon: 'book', href: LINKS.docs },
-  { label: 'Developers', icon: 'code', href: LINKS.dev },
-  { label: 'Ecosystem', icon: 'grid', href: LINKS.chainEcosystem },
-  { label: 'Status', icon: 'radio', href: LINKS.status },
-  { label: 'Gully ecosystem →', icon: 'globe', href: LINKS.ecosystem, newTab: true },
-  { label: 'Telegram', icon: 'send', href: LINKS.telegram },
-  { label: 'Discord', icon: 'message', href: LINKS.discord },
-  { label: 'X', icon: 'twitter', href: LINKS.x },
-];
-/** The faucet is testnet only, so the mainnet build drops it (LINKS.faucet is null there). */
-export const FOOT_LINKS = FOOT_LINKS_ALL.filter((l): l is { label: string; icon: IconName; href: string; newTab?: boolean } => !!l.href);
 
 /** Gully Chain's Terms and Privacy (gullychain.xyz), in every footer, the embed's minimal one too. Another origin: new tab. */
 export const LEGAL_LINKS: { label: string; icon: IconName; href: string }[] = [
@@ -736,46 +740,30 @@ export function ConsentLine() {
   );
 }
 
-export function Footer({ minimal }: { minimal?: boolean }) {
+/** Who secures each lane: one plain line under the page content (and in the embed). */
+export function BridgeCredit() {
   return (
-    <footer className="foot">
-      <div className="foot-in">
-        {/* brand kit v4 icon (logo/gc-icon.svg, byte-identical); kit v4 has no wordmark file */}
-        <a className="foot-brand" href={LINKS.chain} aria-label="Gully Chain home">
-          <img src="brand/logo/gc-icon.svg" width={32} height={32} alt="Gully Chain" />
-        </a>
-        {!minimal && (
-          <nav className="foot-links" aria-label="Footer">
-            {FOOT_LINKS.map((l) => (
-              <Ext key={l.label} href={l.href} newTab={l.newTab}>
-                <Icon name={l.icon} />
-                {l.label}
-              </Ext>
-            ))}
-          </nav>
-        )}
-        <div className="foot-badges">
-          <a className="gc-badge" href={LINKS.chain} aria-label="Powered by GullyChain">
-            {/* brand kit v4 badges/badge-dark.png (960x256, byte-identical) shown at 180x48 */}
-            <img src="brand/badges/badge-dark.png" width={180} height={48} alt="Powered by GullyChain" />
-          </a>
-          <Ext href={LINKS.gullyLabs} className="badge-link" newTab>
-            <img src="brand/badges/gully-labs-powered-by-dark.svg" width={140} height={48} alt="Powered by Gully Labs" />
+    <p className="credit">
+      Fast lane secured by <Ext href={LINKS.hyperlane}>Hyperlane</Ext>. Cheapest lane: the Gully Chain Arbitrum Nitro rollup
+      bridge.{IS_TESTNET ? ' Testnet: no real value.' : ''}
+    </p>
+  );
+}
+
+/** The embed widget's minimal footer: who secures the lanes and the Gully Chain Terms and Privacy (the full Gully Chain
+ *  footer is the shared kit's, src/ui/common/shell.tsx). */
+export function EmbedFooter() {
+  return (
+    <footer className="foot foot-embed">
+      <BridgeCredit />
+      <nav className="foot-legal" aria-label="Legal">
+        {LEGAL_LINKS.map((l) => (
+          <Ext key={l.href} href={l.href} newTab>
+            <Icon name={l.icon} size={16} />
+            {l.label}
           </Ext>
-          <p className="credit">
-            Fast lane secured by <Ext href={LINKS.hyperlane}>Hyperlane</Ext>. Canonical lane: the GullyChain Arbitrum Nitro
-            rollup bridge.{IS_TESTNET ? ' Testnet: no real value.' : ''}
-          </p>
-          <nav className="foot-legal" aria-label="Legal">
-            {LEGAL_LINKS.map((l) => (
-              <Ext key={l.href} href={l.href} newTab>
-                <Icon name={l.icon} size={16} />
-                {l.label}
-              </Ext>
-            ))}
-          </nav>
-        </div>
-      </div>
+        ))}
+      </nav>
     </footer>
   );
 }

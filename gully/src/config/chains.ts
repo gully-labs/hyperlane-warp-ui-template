@@ -70,8 +70,8 @@ const TESTNET_CHAINS: Record<ChainKey, ChainInfo> = {
     key: 'gullychaintestnet',
     id: 485590,
     protocol: 'ethereum',
-    name: 'GullyChain Testnet',
-    short: 'GullyChain',
+    name: 'Gully Chain Testnet',
+    short: 'Gully Chain',
     nativeSymbol: 'ETH',
     nativeDecimals: 18,
     // VITE_GULLY_RPC (optional, comma-separated) goes first, then same-origin /rpc, then the public list (config/rpc.ts)
@@ -227,7 +227,7 @@ const NITRO_PRECOMPILES = {
   nodeInterface: '0x00000000000000000000000000000000000000C8' as Address,
 };
 
-/** Arbitrum Nitro rollup bridge of GullyChain Testnet (gully-labs/arbitrum-token-bridge orbitChainsData.json). */
+/** Arbitrum Nitro rollup bridge of Gully Chain Testnet (gully-labs/arbitrum-token-bridge orbitChainsData.json). */
 const TESTNET_CANONICAL = {
   inbox: '0x7B8499f1C058c9bdE2Bc9BdFEBE40364232C52B5' as Address,
   bridge: '0x2073106fd3fc844Bbde31f5Bf0BB91cf1e2d6C8A' as Address,
@@ -240,7 +240,7 @@ const TESTNET_CANONICAL = {
 };
 
 /**
- * GullyGasDrop on GullyChain (gully-ops): a small ETH drop for gas on a wallet's first bridge of a non-ETH token.
+ * GullyGasDrop on Gully Chain (gully-ops): a small ETH drop for gas on a wallet's first bridge of a non-ETH token.
  * Testnet: 0x7eb78D16F7aE797C07DC476FA3AE9d9Bb09Fc241 (set by scripts/build-staging.mjs). Unset = the feature is hidden.
  */
 export const GAS_DROP_ADDRESS: string = (env.VITE_GAS_DROP_ADDRESS || '').trim();

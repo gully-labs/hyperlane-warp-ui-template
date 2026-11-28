@@ -1,3 +1,4 @@
 { "repo": "hyperlane-warp-ui-template", "product": "gully-chain", "checks": [
-  { "type": "kit", "kit": "gc-switcher", "dir": "gully/src/gc-switcher" }
+  { "type": "kit", "kit": "gc-switcher", "dir": "gully/src/gc-switcher" },
+  { "type": "kit", "kit": "gc-nav", "dir": "gully/src/vendor/gc-nav" }
 ] }

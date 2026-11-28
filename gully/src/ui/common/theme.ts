@@ -30,6 +30,12 @@ function apply() {
   subs.forEach((f) => f());
 }
 media?.addEventListener?.('change', () => pref === 'system' && apply());
+// the header's theme button is the shared Gully Chain nav kit's (src/vendor/gc-nav): it saves the choice and sets the
+// attributes itself, then fires gcn:theme; follow it so charts and the theme-color meta stay in step
+if (hasDom) window.addEventListener('gcn:theme', (e) => {
+  pref = asPref((e as CustomEvent<{ pref: string }>).detail?.pref);
+  apply();
+});
 
 export function setThemePref(next: ThemePref) {
   pref = next;

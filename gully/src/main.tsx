@@ -7,6 +7,7 @@ import './styles/b.css';
 import './styles/c.css';
 import './styles/earn.css';
 import './styles/night.css';
+import './vendor/gc-nav/gc-nav.css';
 import './styles/light.css';
 
 void import('./boot');

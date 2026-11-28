@@ -1,5 +1,5 @@
 /**
- * GullyChain Testnet (485590) public RPCs, in fallback order (testnet-* subdomains, 2026-10-29):
+ * Gully Chain Testnet (485590) public RPCs, in fallback order (testnet-* subdomains, 2026-10-29):
  * 1. same-origin `/rpc`, only in the browser on a gullychain.xyz host (avoids ISP filtering of "testnet-" hostnames)
  * 2. testnet-rpc.gullychain.xyz (gully-l3 eRPC, canonical)
  * 3. rpc.gullyrpc.xyz keyless Gully RPC project (gully box, a different server)

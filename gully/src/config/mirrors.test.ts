@@ -36,7 +36,7 @@ const doc = (pairs: unknown[], extra: Record<string, unknown> = {}) => ({
 afterEach(() => setMirrorRoutes([]));
 
 describe('mirror routes from /mirrors.json', () => {
-  it('maps an active pair to a FastRoute: collateral on GullyChain, synthetic mirror on the destination', () => {
+  it('maps an active pair to a FastRoute: collateral on Gully Chain, synthetic mirror on the destination', () => {
     const [r] = mirrorRoutes(doc([pair()]));
     expect(r.id).toBe(`MIRROR/${TOKEN}/arbitrumsepolia`);
     expect(r.id).toBe(mirrorRouteId(TOKEN, 'arbitrumsepolia'));

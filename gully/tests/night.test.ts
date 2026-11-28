@@ -67,8 +67,10 @@ describe('brand kit files on the black pages', () => {
     it(`${file} is the kit file byte for byte`, () => expect(sha(file)).toBe(want));
   }
   it('no light-ground logo or badge is referenced', () => {
+    // the shared footer carries the kit's light Gully Labs badge for the Light theme (gc-nav shows one per theme)
     for (const f of ['src/ui/common/parts.tsx', 'src/ui/common/shell.tsx', 'index.html']) {
-      expect(readFileSync(join(app, f), 'utf8'), f).not.toMatch(/for-light-bg|-light\.(svg|png)|-light-[23]x/);
+      const s = readFileSync(join(app, f), 'utf8').replace(/(labs|core)BadgeLight="[^"]+"/g, '');
+      expect(s, f).not.toMatch(/for-light-bg|-light\.(svg|png)|-light-[23]x/);
     }
   });
   it('kit v4 only: icon + dark badge, no kit v3 logo, wordmark, badge or font', () => {
@@ -76,9 +78,10 @@ describe('brand kit files on the black pages', () => {
       const s = readFileSync(join(app, f), 'utf8');
       expect(s, f).not.toMatch(/gullychain-logo|wordmark-for|gullychain-powered-by|mascot-trader|exo2/);
     }
-    expect(readFileSync(join(app, 'src/ui/common/shell.tsx'), 'utf8')).toContain('src="brand/logo/gc-icon.svg" width={32} height={32}');
-    const parts = readFileSync(join(app, 'src/ui/common/parts.tsx'), 'utf8');
-    expect(parts).toContain('src="brand/badges/badge-dark.png" width={180} height={48}');
+    // header + footer = the shared gc-nav kit, fed the kit v4 icon and the kit badges served from public/brand
+    const shell = readFileSync(join(app, 'src/ui/common/shell.tsx'), 'utf8');
+    expect(shell).toContain("export const NAV_LOGO = '/brand/logo/gc-icon.svg';");
+    for (const m of shell.matchAll(/(?:logo|Badge|BadgeLight)="(\/brand\/[^"]+)"/g)) expect(existsSync(join(app, 'public', m[1])), m[1]).toBe(true);
     for (const f of ['night.css', 'base.css', 'a.css', 'b.css', 'c.css']) {
       const css = readFileSync(join(app, 'src/styles', f), 'utf8');
       expect(css, f).not.toMatch(/Exo 2|#05080D|#0A1018|#2563FF|#00B2FA|#46FB04|#F2F5F7|#8A97A8|0,\s*178,\s*250/i);
@@ -93,29 +96,18 @@ describe('brand kit files on the black pages', () => {
     expect(readFileSync(join(app, 'scripts/build-staging.mjs'), 'utf8')).toContain("VITE_SITE_URL: 'https://testnet-bridge.gullychain.xyz/'");
     expect(html).toMatch(/name="theme-color" content="#0A0F0E"/);
     expect(readFileSync(join(app, 'public/site.webmanifest'), 'utf8')).toContain('"theme_color": "#0A0F0E"');
-    // Light / Dark / System (2026-11-28): the switcher follows the theme shown; Dark is the default (src/ui/common/theme.ts)
-    expect(readFileSync(join(app, 'src/ui/common/shell.tsx'), 'utf8')).toMatch(/theme=\{theme\}/);
+    // Light / Dark / System (2026-11-28): the header's theme button is the shared gc-nav kit's; Dark is the default
     expect(readFileSync(join(app, 'src/ui/common/theme.ts'), 'utf8')).toContain("? v : 'dark'");
   });
 });
 
-// Design-gap audit 2026-10-29: one click from the bridge to every key Gully Chain surface.
-describe('navigation reach (gc-switcher 1.8.4 + footer)', () => {
-  it('ships gc-switcher 1.8.4 (Gully Chain products only, no kre8.fun; kit v4 icon; Ecosystem entry) in the dark header', () => {
-    const js = readFileSync(join(app, 'src/gc-switcher/gc-switcher.js'), 'utf8');
-    expect(js).toMatch(/GC_SWITCHER_VERSION = '1\.8\.4'/);
-    expect(js.slice(js.indexOf('var PRODUCTS = ['), js.indexOf('];', js.indexOf('var PRODUCTS = [')))).not.toMatch(/kre8\.fun/);
-    expect(js).toMatch(/id: 'ecosystem'[^}]*https:\/\/gullychain\.xyz\/ecosystem\//);
-    expect(js).toMatch(/showPopover\(\)/);
+// Design-gap audit 2026-10-29: one click from the bridge to every key Gully Chain surface. Since 2026-11-28 that is the shared
+// Gully Chain header and footer (gc-nav kit, tests/gc-nav.test.ts): Build menu (dev portal, faucet, docs, status...) + footer.
+describe('navigation reach (shared Gully Chain nav)', () => {
+  it('the header and footer come from the vendored gc-nav kit', () => {
     const shell = readFileSync(join(app, 'src/ui/common/shell.tsx'), 'utf8');
-    expect(shell).toMatch(/<GullyChainSwitcher current="bridge" theme=\{theme\}/);
-  });
-  it('footer links the dev portal, the chain ecosystem page and status', () => {
-    const parts = readFileSync(join(app, 'src/ui/common/parts.tsx'), 'utf8');
-    const foot = parts.slice(parts.indexOf('export const FOOT_LINKS'), parts.indexOf('export function Footer'));
-    for (const k of ['LINKS.dev', 'LINKS.chainEcosystem', 'LINKS.status', 'LINKS.explorer', 'LINKS.faucet', 'LINKS.docs']) expect(foot).toContain(`href: ${k} }`);
-    const chains = readFileSync(join(app, 'src/config/chains.ts'), 'utf8');
-    expect(chains).toContain("dev: 'https://dev.gullychain.xyz/'");
-    expect(chains).toContain("chainEcosystem: 'https://gullychain.xyz/ecosystem/'");
+    expect(shell).toContain("from '../../vendor/gc-nav/gc-nav-react.js'");
+    const data = readFileSync(join(app, 'src/vendor/gc-nav/gc-nav-data.js'), 'utf8');
+    for (const u of ['https://dev.gullychain.xyz/', 'https://gullychain.xyz/ecosystem/', 'https://status.gullylabs.xyz/', 'https://testnet.gullyscan.xyz/', 'https://faucet.gullychain.xyz/', 'https://docs.gullychain.xyz/']) expect(data).toContain(`'${u}'`);
   });
 });

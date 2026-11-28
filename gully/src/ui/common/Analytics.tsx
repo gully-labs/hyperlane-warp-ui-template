@@ -2,13 +2,38 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { getBridgeClient } from '../../bridge/bridgeClient';
 import { ago, duration } from '../../bridge/format';
-import { hourly, WINDOW_HOURS, type BridgeStats } from '../../bridge/stats';
+import { hourly, WINDOW_HOURS, type BridgeStats, type StatTransfer } from '../../bridge/stats';
+import type { ActivityItem } from '../../bridge/types';
 import { BackingGauge, BackingLines, ChartCard, DeliveryChart, Donut, Empty, Legend, SERIES, StackedBars } from './charts';
 import { Icon } from './icons';
 import { Sparkline } from './parts';
 import { Money, UsdNote } from './money';
 import { asEth, ethN, fmtUsd, toUsd, useEthUsd } from '../../bridge/usd';
 import { CHAINS } from '../../config/chains';
+
+export const STATS_TIMEOUT_MS = 25_000;
+
+/** Transfers of the live feed (newest ~30, both chains) in the last WINDOW_HOURS, shaped like the stats rows. */
+export function feedTransfers(items: ActivityItem[] | undefined, now = Date.now()): StatTransfer[] | undefined {
+  if (!items) return undefined;
+  return items
+    .filter((i) => i.time !== undefined && now - i.time <= WINDOW_HOURS * 3600_000)
+    .map((i) => ({ kind: i.kind, direction: i.direction, amount: i.amount, time: i.time!, delivered: true }));
+}
+
+/** Daily buckets (oldest first) of the live feed: the chart the page draws while, or instead of, the 48 h read. */
+export function dailyFeed(items: ActivityItem[], days = 14, now = Date.now()) {
+  const end = Math.ceil(now / 86_400_000) * 86_400_000;
+  const buckets = Array.from({ length: days }, (_, i) => ({ t: end - (days - i) * 86_400_000, fast: 0, canonical: 0, count: 0 }));
+  for (const it of items) {
+    if (it.time === undefined || !/^(ETH|gETH|hypETH)$/.test(it.symbol)) continue;
+    const i = Math.floor((it.time - buckets[0].t) / 86_400_000);
+    if (i < 0 || i >= days) continue;
+    buckets[i][it.kind] += Number(it.amount) / 1e18;
+    buckets[i].count += 1;
+  }
+  return buckets;
+}
 
 export function useStats(intervalMs = 30000) {
   const [stats, setStats] = useState<BridgeStats>();
@@ -20,7 +45,11 @@ export function useStats(intervalMs = 30000) {
       if (busy || document.hidden) return;
       busy = true;
       try {
-        const s = await getBridgeClient().stats();
+        // the full read walks 48 h of logs on two chains; a slow public RPC must not leave a skeleton up for good
+        const s = await Promise.race([
+          getBridgeClient().stats(),
+          new Promise<never>((_, no) => setTimeout(() => no(new Error('the chains are slow to answer')), STATS_TIMEOUT_MS)),
+        ]);
         if (!stop) {
           setStats(s);
           setError(undefined);
@@ -41,21 +70,25 @@ export function useStats(intervalMs = 30000) {
   return { stats, error };
 }
 
-export function TransfersPerHourTile({ stats }: { stats?: BridgeStats }) {
-  const h = useMemo(() => (stats ? hourly(stats.transfers, stats.at) : undefined), [stats]);
+export function TransfersPerHourTile({ stats, items }: { stats?: BridgeStats; items?: ActivityItem[] }) {
+  // the full 48 h read when it has answered, else the live feed's transfers in the same window (a real count, never a dash
+  // once either source has answered)
+  const rows = stats?.transfers ?? feedTransfers(items);
+  const h = useMemo(() => (rows ? hourly(rows, stats?.at ?? Date.now()) : undefined), [rows, stats?.at]);
+  const total = h?.reduce((a, b) => a + b.count, 0);
   return (
     <div className="tile">
       <span className="label">
         <Icon name="activity" size={14} /> Transfers · {WINDOW_HOURS}h
       </span>
-      <b className="tile-num">{h ? h.reduce((a, b) => a + b.count, 0) : '–'}</b>
-      {h && <Sparkline values={h.map((b) => b.count)} label="Transfers per hour, last 48 hours" />}
-      <small className="muted">per hour, both lanes</small>
+      <b className="tile-num">{total === undefined ? '–' : total.toLocaleString('en-US')}</b>
+      {h && total ? <Sparkline values={h.map((b) => b.count)} label={`Transfers per hour, last ${WINDOW_HOURS} hours`} /> : null}
+      <small className="muted">{total === undefined ? 'Reading both chains…' : total ? 'both lanes, both ways' : 'none in the last 48 h'}</small>
     </div>
   );
 }
 
-export function Analytics() {
+export function Analytics({ items }: { items?: ActivityItem[] }) {
   const price = useEthUsd();
   const totalLabel = (wei: bigint) => {
     const e = asEth(wei);
@@ -70,24 +103,27 @@ export function Analytics() {
   }, []);
   const buckets = useMemo(() => (stats ? hourly(stats.transfers, stats.at) : []), [stats]);
 
-  if (!stats)
+  if (!stats) {
+    // While the 48 h read runs (or if it cannot finish): the live feed's transfers per day, a real chart from the same
+    // chains. Nothing to draw and no answer = no section (never a stuck skeleton).
+    const days = items ? dailyFeed(items) : [];
+    const any = days.some((d) => d.count);
+    if (!any) return null;
     return (
       <section className="analytics" id="stats" aria-label="Bridge analytics">
         <h2 className="label section-label">
-          <Icon name="activity" size={14} /> Bridge analytics
+          <Icon name="activity" size={14} /> Bridge analytics <small className="muted">recent transfers · 14 days</small>
         </h2>
-        <div className="card chart-card">
-          {error ? (
-            <Empty>Analytics are offline: the chains did not answer ({error.slice(0, 80)}). Retrying every 30 s.</Empty>
-          ) : (
-            <div className="chart-loading" aria-busy="true">
-              <span className="shimmer" />
-              <span className="shimmer" />
-            </div>
-          )}
-        </div>
+        <ChartCard
+          title={price ? 'Value bridged per day' : 'ETH bridged per day'}
+          sub={`${days.reduce((a, d) => a + d.count, 0)} recent transfers${error ? ' · detailed 48 h figures are slow to read right now' : ''}`}
+          legend={<Legend items={[{ label: 'Fast', color: SERIES.fast }, { label: 'Cheapest', color: SERIES.canonical }]} />}
+        >
+          <StackedBars data={days} axis={['14 days ago', '7 days', 'today']} unit="day" />
+        </ChartCard>
       </section>
     );
+  }
 
   const t = stats.transfers;
   const count = (k: string, d: string) => t.filter((x) => x.kind === k && x.direction === d).length;
@@ -114,16 +150,16 @@ export function Analytics() {
           title={price ? 'Value bridged per hour' : 'ETH bridged per hour'}
           sub={totalLabel(t.reduce((a, x) => a + x.amount, 0n))}
           className="an-wide"
-          legend={<Legend items={[{ label: 'Fast', color: SERIES.fast }, { label: 'Canonical', color: SERIES.canonical }]} />}
+          legend={<Legend items={[{ label: 'Fast', color: SERIES.fast }, { label: 'Cheapest', color: SERIES.canonical }]} />}
         >
           <StackedBars data={buckets} />
         </ChartCard>
         <ChartCard title="Route split" sub="transfers by lane and direction">
           <Donut
             parts={[
-              { label: 'Fast → GullyChain', value: count('fast', 'deposit'), color: SERIES.fast },
+              { label: 'Fast → Gully Chain', value: count('fast', 'deposit'), color: SERIES.fast },
               { label: 'Fast → Arbitrum', value: count('fast', 'withdraw'), color: SERIES.fast, hatch: true },
-              { label: 'Canonical → GullyChain', value: count('canonical', 'deposit'), color: SERIES.canonical },
+              { label: 'Canonical → Gully Chain', value: count('canonical', 'deposit'), color: SERIES.canonical },
               { label: 'Canonical → Arbitrum', value: count('canonical', 'withdraw'), color: SERIES.canonical, hatch: true },
             ]}
           />
@@ -134,15 +170,15 @@ export function Analytics() {
           className="an-wide"
         >
           <DeliveryChart points={delivery} />
-          <p className="fine">Canonical deposits are credited in the GullyChain block that reads them; that block carries the deposit's own timestamp, so their delivery time is not measurable on chain and is not plotted.</p>
+          <p className="fine">Canonical deposits are credited in the Gully Chain block that reads them; that block carries the deposit's own timestamp, so their delivery time is not measurable on chain and is not plotted.</p>
         </ChartCard>
         {liq && (
           <ChartCard title="Fast lane liquidity" sub="native ETH each router can pay out">
             <dl className="kv">
-              <div><dt>GullyChain router (pays deposits)</dt><dd><Money v={liq.supply} inline /></dd></div>
+              <div><dt>Gully Chain router (pays deposits)</dt><dd><Money v={liq.supply} inline /></dd></div>
               <div><dt>{CHAINS.arbitrumsepolia.name} router (pays withdrawals)</dt><dd><Money v={liq.locked} inline /></dd></div>
             </dl>
-            <Legend items={[{ label: `${CHAINS.arbitrumsepolia.name} router`, color: SERIES.canonical }, { label: 'GullyChain router (dashed)', color: SERIES.fast }]} />
+            <Legend items={[{ label: `${CHAINS.arbitrumsepolia.name} router`, color: SERIES.canonical }, { label: 'Gully Chain router (dashed)', color: SERIES.fast }]} />
             <BackingLines series={liq.series} symbol="ETH liquidity" />
           </ChartCard>
         )}

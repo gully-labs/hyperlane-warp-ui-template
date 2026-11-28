@@ -3,9 +3,9 @@ import type { Direction, RouteKind } from './types';
 export interface RouteContext {
   direction: Direction;
   amount: bigint | null;
-  /** what the fast route sends from GullyChain: gas ETH (native route) or gETH / hypETH (retired routes); undefined when no wallet */
+  /** what the fast route sends from Gully Chain: gas ETH (native route) or gETH / hypETH (retired routes); undefined when no wallet */
   fastTokenBalance?: bigint;
-  /** native ETH the user holds on GullyChain */
+  /** native ETH the user holds on Gully Chain */
   childEthBalance?: bigint;
   fastAvailable: boolean;
   /** max the fast route can deliver (native destination routers pay out what they hold); undefined = unlimited */
@@ -22,7 +22,7 @@ export interface RoutePick {
  * - Fast is preferred whenever it can carry the amount: minutes in both directions.
  * - Deposits fall back to Canonical when the fast destination lacks liquidity.
  * - Withdrawals use Fast when the user holds enough of what the route sends: gas ETH on the native route (the default
- *   since 2026-10-28, so fastTokenBalance = the GullyChain ETH balance), gETH / hypETH when redeeming a retired route.
+ *   since 2026-10-28, so fastTokenBalance = the Gully Chain ETH balance), gETH / hypETH when redeeming a retired route.
  *   Otherwise (or above the Fast lane's liquidity) they fall back to the Canonical lane (challenge period, then a claim).
  */
 export function pickRoute(c: RouteContext): RoutePick {
@@ -34,8 +34,8 @@ export function pickRoute(c: RouteContext): RoutePick {
   if (c.fastTokenBalance === undefined) return { kind: 'fast', reason: 'Exits in minutes' };
   if (amt > 0n && c.fastTokenBalance >= amt) return { kind: 'fast', reason: 'Exits in minutes' };
   if (amt > 0n && (c.childEthBalance ?? 0n) >= amt)
-    return { kind: 'canonical', reason: 'Your GullyChain ETH exits through the canonical bridge' };
+    return { kind: 'canonical', reason: 'Your Gully Chain ETH exits through the canonical bridge' };
   return c.fastTokenBalance > 0n
     ? { kind: 'fast', reason: 'Exits in minutes' }
-    : { kind: 'canonical', reason: 'Your GullyChain ETH exits through the canonical bridge' };
+    : { kind: 'canonical', reason: 'Your Gully Chain ETH exits through the canonical bridge' };
 }

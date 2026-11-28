@@ -1,13 +1,13 @@
-// Direction C (owner's pick, 2026-10-26): A's Terminal frame (stat tiles, ticker tape, live status column)
+// Direction C (owner's pick, 2026-10-26): A's Terminal frame (stat tiles, live status column; the ticker tape was removed
+// 2026-11-28, owner: raw strings, the Live transfers list says it plainly)
 // around B's swap card and animated route visual.
 import { CHAINS, CHILD } from '../../config/chains';
-import { asEth, ethN, fmtUsd, toUsd, useEthUsd } from '../../bridge/usd';
-import { FeedCards, RouteVisual, SwapCard } from '../b/AppB';
+import { RouteVisual, SwapCard } from '../b/AppB';
 import { BridgeEarn } from '../earn/BridgeEarnCard';
 import { Icon } from '../common/icons';
 import { Analytics, TransfersPerHourTile, useStats } from '../common/Analytics';
-import { ActivityList, Footer, MyTransfers, Sparkline } from '../common/parts';
-import { CountUp, Header } from '../common/shell';
+import { ActivityList, BridgeCredit, earnableOf, EmbedFooter, MyTransfers, myTransfers, Sparkline } from '../common/parts';
+import { CountUp, Header, Footer } from '../common/shell';
 import { useActivity, useBridge, useHeads, type UrlOptions } from '../useBridge';
 
 export function AppC({ url }: { url: UrlOptions }) {
@@ -15,11 +15,6 @@ export function AppC({ url }: { url: UrlOptions }) {
   const heads = useHeads();
   const act = useActivity();
   const { stats } = useStats();
-  const price = useEthUsd();
-  const tapeAmt = (v: bigint, sym: string) => {
-    const usd = toUsd(asEth(v), price);
-    return usd === null ? `${ethN(asEth(v))} ${sym}` : `${fmtUsd(usd)} · ${ethN(asEth(v))} ${sym}`;
-  };
   const fast = act.items?.filter((i) => i.kind === 'fast').length;
   const canon = act.items?.filter((i) => i.kind === 'canonical').length;
 
@@ -27,7 +22,7 @@ export function AppC({ url }: { url: UrlOptions }) {
     return (
       <div className="embed c">
         <SwapCard b={b} title="Gully Bridge" />
-        <Footer minimal />
+        <EmbedFooter />
       </div>
     );
 
@@ -50,7 +45,7 @@ export function AppC({ url }: { url: UrlOptions }) {
                 {!heads[c].ok && <small className="err">RPC not answering</small>}
               </div>
             ))}
-            <TransfersPerHourTile stats={stats} />
+            <TransfersPerHourTile stats={stats} items={act.items} />
             <div className="tile">
               <span className="label">
                 <Icon name="layers" size={14} /> Lanes · recent
@@ -59,21 +54,9 @@ export function AppC({ url }: { url: UrlOptions }) {
                 <span><Icon name="zap" size={16} /> <CountUp value={fast} /></span>
                 <span><Icon name="shield" size={16} /> <CountUp value={canon} /></span>
               </b>
-              <small className="muted">Fast · Canonical transfers</small>
+              <small className="muted">Fast · Cheapest, last 30 transfers</small>
             </div>
           </section>
-          <div className="tape" aria-hidden="true">
-            <div className="tape-in">
-              {[...(act.items || []), ...(act.items || [])].slice(0, 40).map((i, n) => (
-                <span key={`${i.key}-${n}`}>
-                  <i className={`dot dot-${i.kind}`} />
-                  {i.kind === 'fast' ? 'FAST' : 'CANON'} {i.direction === 'deposit' ? 'ARB→GULLY' : 'GULLY→ARB'}{' '}
-                  {tapeAmt(i.amount, i.symbol)}
-                </span>
-              ))}
-              {!act.items?.length && <span>Waiting for live transfers…</span>}
-            </div>
-          </div>
           <div className="grid-c">
             <div className="hero-c">
               <div className="rv-wrap" aria-hidden={false}>
@@ -82,8 +65,9 @@ export function AppC({ url }: { url: UrlOptions }) {
               <SwapCard b={b} title="Gully Bridge" />
             </div>
             <div className="side">
-              {/* Bridge & Earn: only while the form bridges INTO Gully Chain (b.to === 'gullychaintestnet') */}
-              {b.to === CHILD && <BridgeEarn />}
+              {/* Bridge & Earn, once per page (owner 2026-11-28): the program card while the form bridges INTO Gully Chain and
+                  the user has no Fast delivery yet; after one, the single next-step notice in Your transfers replaces it */}
+              {b.to === CHILD && !earnableOf(myTransfers(b)) && <BridgeEarn />}
               <section className="card status-card" aria-label="Network status">
                 <div className="card-head">
                   <h2 className="label">
@@ -125,14 +109,16 @@ export function AppC({ url }: { url: UrlOptions }) {
                   </h2>
                   <small className="muted">from both chains</small>
                 </div>
-                <FeedCards items={act.items} />
                 <ActivityList items={act.items} error={act.error} limit={7} preview={url.preview} />
               </section>
             </div>
           </div>
-          <Analytics />
+          <Analytics items={act.items} />
         </div>
       </main>
+      <div className="wrap">
+        <BridgeCredit />
+      </div>
       <Footer />
     </div>
   );

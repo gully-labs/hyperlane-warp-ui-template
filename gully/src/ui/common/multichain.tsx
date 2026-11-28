@@ -60,7 +60,7 @@ function ChainModal({ b, onClose }: { b: BridgeState; onClose: () => void }) {
           );
         })}
       </ul>
-      <p className="fine">Every chain connects to GullyChain Testnet. Testnet tokens have no real value.</p>
+      <p className="fine">Every chain connects to Gully Chain Testnet. Testnet tokens have no real value.</p>
     </Modal>
   );
 }
@@ -139,7 +139,7 @@ export function RecipientField({ b }: { b: BridgeState }) {
         id="recipient"
         autoComplete="off"
         spellCheck={false}
-        placeholder={b.destIsSolana ? 'Solana address' : '0x… GullyChain address'}
+        placeholder={b.destIsSolana ? 'Solana address' : '0x… Gully Chain address'}
         value={b.recipientText}
         onChange={(e) => b.setRecipientText(e.target.value.trim())}
         aria-invalid={b.recipient !== '' && !b.recipientValid}
@@ -150,12 +150,12 @@ export function RecipientField({ b }: { b: BridgeState }) {
             ? 'Address looks right.'
             : b.destIsSolana
               ? 'That is not a Solana address.'
-              : 'That is not a GullyChain (0x…) address.'
+              : 'That is not a Gully Chain (0x…) address.'
           : b.recipient
             ? `Your connected wallet ${short(b.recipient)}`
             : b.destIsSolana
               ? 'Paste a Solana address, or connect a Solana wallet.'
-              : 'Paste your GullyChain address, or connect your EVM wallet.'}
+              : 'Paste your Gully Chain address, or connect your EVM wallet.'}
         {b.destIsSolana && !sol.address && (
           <>
             {' '}
@@ -181,14 +181,14 @@ export function GasDropNote({ b }: { b: BridgeState }) {
       <span>
         {g.kind === 'drop' && (
           <>
-            First bridge to GullyChain? You also get <TokenAmount v={g.amount ?? 0n} symbol="ETH" inline /> for gas, so you can use
+            First bridge to Gully Chain? You also get <TokenAmount v={g.amount ?? 0n} symbol="ETH" inline /> for gas, so you can use
             your {sym} right away.
           </>
         )}
         {g.kind === 'paymaster' && 'Your Gully ID passkey account needs no gas: the Gully paymaster pays its fees, so no ETH drop is sent.'}
         {g.kind === 'empty' && (
           <>
-            Today&apos;s free gas drops are used up. You need a little ETH on GullyChain to move your {sym}
+            Today&apos;s free gas drops are used up. You need a little ETH on Gully Chain to move your {sym}
             {LINKS.faucet ? (
               <>
                 :{' '}
