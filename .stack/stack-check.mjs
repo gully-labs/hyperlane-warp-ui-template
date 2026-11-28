@@ -13,6 +13,8 @@
 //   { "type": "addresses", "file": "<json>", "chain": "<id>", "select": "contracts", "complete": true }  every name -> address
 //        in the file equals the registry address book for that chain (records in gully-ops); complete = no contract missing either
 //   { "type": "hosts", "file": "<path>", "domains": ["gullycore.xyz", ...] }  every https host of those domains is a registry host
+//   { "type": "socials", "file": "<path>", "product": "<id>" }       the file links every registry social of the product (default
+//        this repo's product) and links no other account of that product on the same social sites (e.g. an old X handle)
 // Exceptions live in the registry (kits.json `accept`, with an expiry date), never in this file or in checks.json.
 import crypto from 'node:crypto';
 import fs from 'node:fs';
@@ -125,6 +127,21 @@ export function run({ root, snapshot, checks, selfBytes, now = new Date() }) {
         const unknown = [...seen].filter((h) => !known.has(h));
         if (!unknown.length) pass(`${label}: ${seen.size} host(s) known`);
         else fail(`${label}: host(s) not in the registry: ${unknown.join(', ')}`);
+      } else if (c.type === 'socials') {
+        const pid = c.product || checks.product;
+        const prod = snapshot.products.find((p) => p.id === pid);
+        const want = Object.entries(prod?.socials || {}).map(([id, href]) => ({ id, href }));
+        if (!want.length) { fail(`${label}: product ${pid} has no socials in the registry`); continue; }
+        const txt = fs.readFileSync(file(c.file), 'utf8');
+        const norm = (u) => u.toLowerCase().replace(/\/+$/, '');
+        const missing = want.filter((s) => !txt.includes(s.href)).map((s) => s.id);
+        // any account on the same social sites whose handle names the product but is not the registry's
+        const sites = [...new Set(want.map((s) => new URL(s.href).host.replace(/^www\./, '')))];
+        const known = new Set(want.map((s) => norm(s.href)));
+        const re = new RegExp(`https://(?:www\.)?(?:${sites.map((h) => h.replace(/\./g, '\.')).join('|')})/[A-Za-z0-9_.]+/?`, 'g');
+        const other = [...new Set([...txt.matchAll(re)].map((m) => m[0]))].filter((u) => !known.has(norm(u)) && u.toLowerCase().includes(pid.toLowerCase()));
+        if (!missing.length && !other.length) pass(`${label}: ${want.length} ${pid} social(s) = registry`);
+        else fail(`${label}: ${missing.length ? `missing ${missing.join(',')} ` : ''}${other.length ? `not the registry's ${pid} account: ${other.join(', ')}` : ''}`.trim());
       } else fail(`${label}: unknown check type`);
     } catch (e) { fail(`${label}: ${e.message}`); }
   }

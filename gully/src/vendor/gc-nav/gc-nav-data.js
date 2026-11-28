@@ -6,7 +6,7 @@
 // Gully Chain products (Sign in with Gully ID and the app entry are features); "Gully Chain" is two words; the header action
 // "Start building" goes to the developer portal quickstart (gc-chrome.json); social links live in the footer (no top X bar).
 // Community items = sites/_shared/community.json (the official channel list), same order.
-export const VERSION = '1.0.2';
+export const VERSION = '1.0.3';
 
 export const URLS = {
   home: 'https://gullychain.xyz/',
