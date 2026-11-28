@@ -4,7 +4,7 @@ import { chainById, CHAINS, CHILD, IS_TESTNET, LINKS, PARENT, txUrl, type ChainK
 import { CAPS } from '../../config/network';
 import { capLines } from '../../bridge/caps';
 import { GULLY_CORE_URL } from '../../config/routes';
-import { ago, duration, fmtAmount, short } from '../../bridge/format';
+import { ago, duration, fmtAmount, humanDuration, short } from '../../bridge/format';
 import type { ActivityItem, StepDef, TransferRecord } from '../../bridge/types';
 import { disconnect, openConnect, startDiscovery } from '../../bridge/wallet';
 import '../../gc-connect/gc-connect.js';
@@ -642,7 +642,7 @@ export function MyTransfers({ b }: { b: BridgeState }) {
 export function claimReadyLine(t: Pick<TransferRecord, 'createdAt' | 'etaSeconds'>, now = Date.now()): string {
   const left = Math.round((t.createdAt + t.etaSeconds * 1000 - now) / 1000);
   if (left <= 60) return 'Almost ready: the claim button shows here once the rollup confirms it.';
-  return `Ready to claim in about ${duration(left)}. You can close this page: the transfer stays listed here.`;
+  return `Ready to claim in about ${humanDuration(left)}. You can close this page: the transfer stays listed here.`;
 }
 
 function statusLabel(t: TransferRecord) {

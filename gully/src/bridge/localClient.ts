@@ -49,6 +49,7 @@ import { checkRecipient } from '../config/mirrors';
 import { USDC_GATEWAY, USDC_DEPOSIT_ETA } from '../config/gateway';
 import { childRouterAbi, depositArgs, gatewayRouterAbi, readGatewayState, readWithdrawState, withdrawalInitiatedEvent, withdrawArgs } from './usdcGateway';
 import { pub } from './clients';
+import { humanDuration } from './format';
 import { convertDecimals, endsOf } from './lanes';
 import type { ActivityItem, Quote, QuoteRequest, StepDef, StepUpdate, TransferRecord } from './types';
 import { ensureChain, walletClient } from './wallet';
@@ -186,12 +187,7 @@ export function isGatewayWithdrawReq(req: Pick<QuoteRequest, 'direction' | 'remo
   return !!USDC_GATEWAY && !!r && r.key === 'USDC' && !r.deployed && (req.remote || PARENT) === PARENT && req.direction === 'withdraw';
 }
 
-/** "45 minutes", "7 days": plain words for a wait. */
-export function humanDuration(sec: number): string {
-  if (sec < 90 * 60) return `${Math.max(1, Math.round(sec / 60))} minutes`;
-  if (sec < 36 * 3600) return `${Math.round(sec / 3600)} hours`;
-  return `${Math.round(sec / 86400)} days`;
-}
+export { humanDuration };
 
 export function gatewayWithdrawSteps(eta?: number): StepDef[] {
   const wait = eta ? `About ${humanDuration(eta)}, then the rollup confirms it` : 'The rollup confirms the withdrawal';

@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 
 import { CHAINS, hyperlaneMessageUrl, LINKS, txUrl, type ChainKey } from '../../config/chains';
-import { duration, short } from '../../bridge/format';
+import { humanDuration, short } from '../../bridge/format';
 import { arrivingSymbol } from '../../bridge/gasDrop';
 import { chainStatus, pickerChains } from '../../bridge/lanes';
 import { cheapestUnavailable, laneCopy } from '../../bridge/laneCopy';
@@ -299,7 +299,7 @@ function GatewayNote({ b }: { b: BridgeState }) {
       <div className="lane-choice gateway-note">
         <p className="lane-copy">
           USDC.e goes back as USDC through the canonical Arbitrum bridge. Withdrawals wait for the rollup's challenge period
-          {eta ? `, about ${duration(eta)} on testnet` : ''} (about 7 days on mainnet). Then you claim it on Arbitrum Sepolia.
+          {eta ? `, about ${humanDuration(eta)} on testnet` : ''} (about 7 days on mainnet). Then you claim it on Arbitrum Sepolia.
         </p>
         <ol className="lane-copy muted gateway-steps">
           <li>Approve and withdraw on Gully Chain (Gully Chain gas, no bridge fee).</li>

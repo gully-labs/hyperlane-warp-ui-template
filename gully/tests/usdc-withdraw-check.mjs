@@ -47,6 +47,7 @@ for (const w of [390, 768, 1440]) {
   const sideways = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   if (sideways > 1) fail(`${w}: sideways scroll ${sideways}px`);
   const eta = /about ([0-9]+ (minutes|hours|days)) on testnet/.exec(card)?.[1];
+  if (/about ~/.test(card)) fail(`${w}: "about ~" in the card`);
   console.log(`${w}: card ok=${/challenge period/i.test(card)} testnet wait=${eta || '(quote not read)'}`);
   await page.screenshot({ path: join(OUT, `withdraw-${LABEL}-${w}.png`), fullPage: false });
   if (errs.length) fail(`${w}: console errors: ${errs.slice(0, 3).join(' | ')}`);

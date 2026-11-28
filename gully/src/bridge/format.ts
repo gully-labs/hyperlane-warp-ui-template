@@ -29,6 +29,13 @@ export function ago(ts: number, now = Date.now()) {
   return `${Math.floor(s / 86400)}d ago`;
 }
 
+/** "45 minutes", "7 days": plain words for a wait, to follow "about" (no "~"). */
+export function humanDuration(sec: number): string {
+  if (sec < 90 * 60) return `${Math.max(1, Math.round(sec / 60))} minutes`;
+  if (sec < 36 * 3600) return `${Math.round(sec / 3600)} hours`;
+  return `${Math.round(sec / 86400)} days`;
+}
+
 export function duration(seconds: number) {
   if (seconds < 45) return `~${Math.max(1, Math.round(seconds))} s`;
   if (seconds < 5400) return `~${Math.max(1, Math.round(seconds / 60))} min`;
