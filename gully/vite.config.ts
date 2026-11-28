@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
   // index.html copy per network (VITE_NETWORK, src/config/network.ts); the testnet values are the page's old text
   const net = mainnet
     ? { parent: 'Arbitrum One', chain: 'Gully Chain', chainFull: 'Gully Chain', tag: 'Gully Chain' }
-    : { parent: 'Arbitrum Sepolia', chain: 'GullyChain', chainFull: 'GullyChain Testnet', tag: 'GullyChain Testnet' };
+    : { parent: 'Arbitrum Sepolia', chain: 'Gully Chain', chainFull: 'Gully Chain Testnet', tag: 'Gully Chain Testnet' };
   return {
     base: './',
     // inline (empty) PostCSS config: stops Vite from picking up the parent template's Tailwind postcss.config.js
