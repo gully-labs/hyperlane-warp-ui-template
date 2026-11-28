@@ -1,8 +1,11 @@
-// USDC deposit through the canonical Arbitrum token bridge (the USDC gateways of gully-ops l3/usdc): pure helpers plus
+// USDC deposit (and withdrawal) through the canonical Arbitrum token bridge (the USDC gateways of gully-ops l3/usdc): pure helpers plus
 // the three chain reads the quote needs. Flow: approve the L1 USDC gateway, then L1GatewayRouter.
 // outboundTransferCustomRefund(...) with ETH for the retryable ticket; the ticket auto-redeems on Gully Chain and the
 // L2 USDC gateway mints USDC.e to the recipient. Same call the tested gully-ops l3/usdc/deposit.mjs makes.
-import { encodeAbiParameters, parseAbi, type Address, type Hex } from 'viem';
+// Withdrawal (same as gully-ops l3/usdc/fork-test.mjs step 5): approve the L2 USDC gateway, L2GatewayRouter.outboundTransfer
+// burns USDC.e and posts an L2ToL1Tx; after the rollup's challenge period Outbox.executeTransaction on Arbitrum Sepolia runs
+// L1USDCGateway.finalizeInboundTransfer, which releases the escrowed USDC (the generic claim in localClient).
+import { encodeAbiParameters, parseAbi, parseAbiItem, type Address, type Hex } from 'viem';
 
 import { CANONICAL, CHILD, PARENT } from '../config/chains';
 import { USDC_GATEWAY, type UsdcGateway } from '../config/gateway';
@@ -21,7 +24,34 @@ const inboxFeeAbi = parseAbi(['function calculateRetryableSubmissionFee(uint256 
 const nodeInterfaceTicketAbi = parseAbi([
   'function estimateRetryableTicket(address sender, uint256 deposit, address to, uint256 l2CallValue, address excessFeeRefundAddress, address callValueRefundAddress, bytes data) returns (uint256)',
 ]);
-export const childRouterAbi = parseAbi(['function calculateL2TokenAddress(address l1ERC20) view returns (address)']);
+export const childRouterAbi = parseAbi([
+  'function calculateL2TokenAddress(address l1ERC20) view returns (address)',
+  'function getGateway(address token) view returns (address)',
+  // withdrawal: the router finds the L2 USDC gateway, which burns USDC.e and sends ArbSys.sendTxToL1 to the L1 gateway
+  'function outboundTransfer(address _l1Token, address _to, uint256 _amount, bytes _data) payable returns (bytes)',
+]);
+export const childUsdcGatewayAbi = parseAbi(['function withdrawalsPaused() view returns (bool)']);
+/** emitted by the L2 USDC gateway on every withdrawal; `_l2ToL1Id` is the outbox leaf (the L2ToL1Tx position) */
+export const withdrawalInitiatedEvent = parseAbiItem(
+  'event WithdrawalInitiated(address l1Token, address indexed _from, address indexed _to, uint256 indexed _l2ToL1Id, uint256 _exitNum, uint256 _amount)',
+);
+
+/** The args of L2GatewayRouter.outboundTransfer for a USDC.e withdrawal: the token is named by its PARENT address. */
+export function withdrawArgs(g: UsdcGateway, o: { to: Address; amount: bigint }) {
+  return [g.parentUsdc, o.to, o.amount, '0x'] as const;
+}
+
+/** Reads: is the withdrawal path open (child router -> the USDC gateway we know, withdrawals not paused). */
+export async function readWithdrawState(g: UsdcGateway): Promise<{ open: true } | { open: false; reason: string }> {
+  const child = pub(CHILD);
+  const [routed, paused] = await Promise.all([
+    child.readContract({ address: g.childRouter, abi: childRouterAbi, functionName: 'getGateway', args: [g.parentUsdc] }),
+    child.readContract({ address: g.childGateway, abi: childUsdcGatewayAbi, functionName: 'withdrawalsPaused' }),
+  ]);
+  if (routed.toLowerCase() !== g.childGateway.toLowerCase()) return { open: false, reason: 'USDC withdrawals are not set up on the Gully Chain router' };
+  if (paused) return { open: false, reason: 'USDC withdrawals are paused right now' };
+  return { open: true };
+}
 
 export interface RetryableCost {
   gasLimit: bigint;

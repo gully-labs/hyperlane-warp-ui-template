@@ -4,7 +4,7 @@ import { chainById, CHAINS, CHILD, IS_TESTNET, LINKS, PARENT, txUrl, type ChainK
 import { CAPS } from '../../config/network';
 import { capLines } from '../../bridge/caps';
 import { GULLY_CORE_URL } from '../../config/routes';
-import { ago, duration, fmtAmount, short } from '../../bridge/format';
+import { ago, duration, fmtAmount, humanDuration, short } from '../../bridge/format';
 import type { ActivityItem, StepDef, TransferRecord } from '../../bridge/types';
 import { disconnect, openConnect, startDiscovery } from '../../bridge/wallet';
 import '../../gc-connect/gc-connect.js';
@@ -601,7 +601,7 @@ export function MyTransfers({ b }: { b: BridgeState }) {
             <div className="mine-top">
               <span className={`feed-kind feed-${t.kind}`}>
                 <Icon name={t.kind === 'fast' ? 'zap' : 'shield'} size={14} />
-                {t.kind === 'fast' ? 'Fast' : 'Cheapest'}
+                {t.gateway ? 'Canonical' : t.kind === 'fast' ? 'Fast' : 'Cheapest'}
               </span>
               <span className="feed-dir" aria-label={`${CHAINS[t.from].name} to ${CHAINS[t.to].name}`}>
                 <ChainMark chain={t.from} size={16} />
@@ -618,9 +618,12 @@ export function MyTransfers({ b }: { b: BridgeState }) {
             {/* Bridge & Earn: a Fast-lane delivery on Gully Chain (t.to === 'gullychaintestnet') is the "bridge arrival"
                 the rewards attester matches; the notice carries the Hyperlane message id and shows only while live */}
             {t.status === 'delivered' && t.kind === 'fast' && t.to === CHILD && <BridgeEarnDelivered messageId={t.messageId} />}
+            {t.status === 'challenge' && t.direction === 'withdraw' && (
+              <p className="mine-note">{claimReadyLine(t)}</p>
+            )}
             {t.status === 'claimable' && (
               <Btn icon="key" onClick={() => b.claim(t)} busy={b.busy} disabled={b.busy} className="btn-sm">
-                Claim on {CHAINS[PARENT].name}
+                Claim {t.receiveSymbol} on {CHAINS[PARENT].name}
               </Btn>
             )}
           </li>
@@ -633,6 +636,13 @@ export function MyTransfers({ b }: { b: BridgeState }) {
       )}
     </section>
   );
+}
+
+/** When a withdrawal in its challenge period can be claimed, in plain words (from when it was sent + the wait). */
+export function claimReadyLine(t: Pick<TransferRecord, 'createdAt' | 'etaSeconds'>, now = Date.now()): string {
+  const left = Math.round((t.createdAt + t.etaSeconds * 1000 - now) / 1000);
+  if (left <= 60) return 'Almost ready: the claim button shows here once the rollup confirms it.';
+  return `Ready to claim in about ${humanDuration(left)}. You can close this page: the transfer stays listed here.`;
 }
 
 function statusLabel(t: TransferRecord) {
@@ -655,6 +665,12 @@ function statusLabel(t: TransferRecord) {
 }
 
 function stepDefsOf(t: TransferRecord): StepDef[] {
+  if (t.gateway && t.direction === 'withdraw')
+    return [
+      { id: 'send', label: 'Withdrawn', hint: CHAINS[t.from].short, chain: t.from, user: true },
+      { id: 'challenge', label: 'Challenge period', hint: duration(t.etaSeconds), chain: t.to, user: false },
+      { id: 'claim', label: 'Claim USDC', hint: CHAINS[t.to].short, chain: t.to, user: true },
+    ];
   if (t.gateway)
     return [
       { id: 'send', label: 'Deposited', hint: CHAINS[t.from].short, chain: t.from, user: true },

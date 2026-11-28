@@ -455,7 +455,15 @@ export function useBridge(url: UrlOptions) {
       if (rec.status === 'failed') toast({ kind: 'error', title: 'Transaction failed', body: rec.error || 'Reverted' });
       else {
         track('bridge', { lane: quote.req.kind });
-        toast({ kind: 'success', title: 'Sent', body: quote.gateway ? 'USDC deposit submitted, USDC.e arrives in about 10 to 15 minutes' : `${quote.req.kind === 'fast' ? 'Fast' : 'Cheapest'} transfer submitted` });
+        toast({
+          kind: 'success',
+          title: 'Sent',
+          body: quote.gatewayWithdraw
+            ? 'USDC.e withdrawal submitted. Claim your USDC on Arbitrum Sepolia after the challenge period'
+            : quote.gateway
+              ? 'USDC deposit submitted, USDC.e arrives in about 10 to 15 minutes'
+              : `${quote.req.kind === 'fast' ? 'Fast' : 'Cheapest'} transfer submitted`,
+        });
       }
       setAmountText('');
     } catch (e) {
@@ -476,7 +484,7 @@ export function useBridge(url: UrlOptions) {
       try {
         const n = await getBridgeClient().claim(rec, onStep);
         setTransfers((all) => all.map((x) => (x.id === n.id ? n : x)));
-        toast({ kind: 'success', title: 'Claimed', body: `ETH released on ${CHAINS[PARENT].name}` });
+        toast({ kind: 'success', title: 'Claimed', body: `${rec.receiveSymbol || 'ETH'} released on ${CHAINS[PARENT].name}` });
       } catch (e) {
         toast({ kind: 'error', title: 'Claim failed', body: ((e as Error).message || '').slice(0, 140) });
       } finally {

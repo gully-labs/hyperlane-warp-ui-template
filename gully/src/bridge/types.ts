@@ -60,6 +60,8 @@ export interface Quote {
   notes: string[];
   /** USDC through the canonical token bridge: the sized retryable ticket (gas limit, fee, submission cost) */
   gateway?: { gasLimit: bigint; maxFeePerGas: bigint; maxSubmissionCost: bigint };
+  /** USDC.e -> USDC through the canonical token bridge: burn on Gully Chain, challenge period, claim on Arbitrum Sepolia */
+  gatewayWithdraw?: boolean;
 }
 
 export type TransferStatus = 'pending' | 'sent' | 'relaying' | 'delivered' | 'challenge' | 'claimable' | 'claimed' | 'failed';
@@ -100,7 +102,8 @@ export interface TransferRecord {
   destFromBlock?: string;
   /** GullyGasDrop: expected on this transfer, then received */
   gasDrop?: 'expected' | 'received';
-  /** USDC through the canonical token bridge: delivered when USDC.e is minted to the recipient */
+  /** USDC through the canonical token bridge. Deposit: delivered when USDC.e is minted to the recipient. Withdraw
+   *  (kind 'canonical'): tracked like an ETH withdrawal by its outbox position, then claimed on Arbitrum Sepolia. */
   gateway?: boolean;
 }
 

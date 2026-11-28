@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 
 import { CHAINS, hyperlaneMessageUrl, LINKS, txUrl, type ChainKey } from '../../config/chains';
-import { short } from '../../bridge/format';
+import { humanDuration, short } from '../../bridge/format';
 import { arrivingSymbol } from '../../bridge/gasDrop';
 import { chainStatus, pickerChains } from '../../bridge/lanes';
 import { cheapestUnavailable, laneCopy } from '../../bridge/laneCopy';
@@ -293,6 +293,22 @@ export function chainLabel(c: ChainKey) {
 
 /** USDC deposits use the canonical token bridge: one lane, with the time, the fee and where to get testnet USDC. */
 function GatewayNote({ b }: { b: BridgeState }) {
+  if (b.direction === 'withdraw') {
+    const eta = b.quotes.fast?.etaSeconds;
+    return (
+      <div className="lane-choice gateway-note">
+        <p className="lane-copy">
+          USDC.e goes back as USDC through the canonical Arbitrum bridge. Withdrawals wait for the rollup's challenge period
+          {eta ? `, about ${humanDuration(eta)} on testnet` : ''} (about 7 days on mainnet). Then you claim it on Arbitrum Sepolia.
+        </p>
+        <ol className="lane-copy muted gateway-steps">
+          <li>Approve and withdraw on Gully Chain (Gully Chain gas, no bridge fee).</li>
+          <li>Wait for the challenge period. The transfer stays under Your transfers, even after a reload.</li>
+          <li>Claim on Arbitrum Sepolia: one transaction, paid in ETH on Arbitrum Sepolia.</li>
+        </ol>
+      </div>
+    );
+  }
   return (
     <div className="lane-choice gateway-note">
       <p className="lane-copy">

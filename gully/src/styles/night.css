@@ -121,6 +121,8 @@ html[data-hfit~="menu"] .nav.nav-open { display: flex; }
 .lane-choice .lane-b:disabled { opacity: 0.45; cursor: not-allowed; }
 .lane-copy { margin: 0; font-size: 13px; line-height: 1.45; color: var(--gn-text-2); }
 .lane-copy.muted { color: var(--gn-text-3); }
+.gateway-steps { padding-left: 18px; display: grid; gap: 4px; }
+.mine-note { margin: 0; font-size: 13px; line-height: 1.45; color: var(--gn-text-3); }
 .recipient { display: grid; gap: 4px; margin: 12px 0 0; }
 .recipient label { font-size: 12px; font-weight: var(--gn-w-semibold); color: var(--gn-text-3); }
 .recipient input { width: 100%; min-height: 44px; padding: 0 12px; border: 1px solid var(--gn-line-strong); border-radius: var(--gn-r-sm); font: inherit; font-family: var(--gn-font-mono); font-size: 13px; color: var(--gn-text); background: var(--gn-surface-2); }

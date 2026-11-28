@@ -47,8 +47,9 @@ import {
 } from './abis';
 import { checkRecipient } from '../config/mirrors';
 import { USDC_GATEWAY, USDC_DEPOSIT_ETA } from '../config/gateway';
-import { depositArgs, gatewayRouterAbi, readGatewayState } from './usdcGateway';
+import { childRouterAbi, depositArgs, gatewayRouterAbi, readGatewayState, readWithdrawState, withdrawalInitiatedEvent, withdrawArgs } from './usdcGateway';
 import { pub } from './clients';
+import { humanDuration } from './format';
 import { convertDecimals, endsOf } from './lanes';
 import type { ActivityItem, Quote, QuoteRequest, StepDef, StepUpdate, TransferRecord } from './types';
 import { ensureChain, walletClient } from './wallet';
@@ -180,6 +181,91 @@ export function isGatewayReq(req: Pick<QuoteRequest, 'direction' | 'remote' | 'f
   return !!USDC_GATEWAY && !!r && r.key === 'USDC' && !r.deployed && (req.remote || PARENT) === PARENT && req.direction === 'deposit';
 }
 
+/** USDC.e back to Arbitrum Sepolia: the same canonical token bridge, the other way (burn, challenge period, claim). */
+export function isGatewayWithdrawReq(req: Pick<QuoteRequest, 'direction' | 'remote' | 'fastRouteId'>): boolean {
+  const r = mcRoute(req.fastRouteId);
+  return !!USDC_GATEWAY && !!r && r.key === 'USDC' && !r.deployed && (req.remote || PARENT) === PARENT && req.direction === 'withdraw';
+}
+
+export { humanDuration };
+
+export function gatewayWithdrawSteps(eta?: number): StepDef[] {
+  const wait = eta ? `About ${humanDuration(eta)}, then the rollup confirms it` : 'The rollup confirms the withdrawal';
+  return [
+    { id: 'approve', label: 'Approve', hint: 'Allow the bridge to move your USDC.e', chain: CHILD, user: true },
+    { id: 'send', label: 'Withdraw', hint: 'Sign on Gully Chain', chain: CHILD, user: true },
+    { id: 'challenge', label: 'Challenge period', hint: wait, chain: PARENT, user: false },
+    { id: 'claim', label: 'Claim USDC', hint: 'Sign on Arbitrum Sepolia', chain: PARENT, user: true },
+  ];
+}
+
+export function gatewayWithdrawNotes(eta: number): string[] {
+  return [
+    'USDC.e is burned on Gully Chain and the same amount of USDC is released to you on Arbitrum Sepolia from the bridge.',
+    `Withdrawals wait for the rollup's challenge period: about ${humanDuration(eta)} on testnet (about 7 days on mainnet).`,
+    'Then come back and claim on Arbitrum Sepolia: one more transaction, you pay its gas in ETH there. The transfer stays listed here until then.',
+  ];
+}
+
+async function gatewayWithdrawQuote(req: QuoteRequest): Promise<Quote> {
+  const g = USDC_GATEWAY!;
+  const sender = req.sender && isAddress(req.sender) ? (req.sender as Address) : undefined;
+  const eta = await withdrawEtaSeconds();
+  const base = {
+    req,
+    from: CHILD,
+    to: PARENT,
+    sendSymbol: 'USDC.e',
+    receiveSymbol: 'USDC',
+    sendDecimals: 6,
+    receiveDecimals: 6,
+    gasSymbol: 'ETH',
+    receive: req.amount,
+    value: 0n,
+    etaSeconds: eta,
+    steps: gatewayWithdrawSteps(eta),
+    needsApproval: true,
+    gatewayWithdraw: true,
+    notes: gatewayWithdrawNotes(eta),
+  };
+  let st: Awaited<ReturnType<typeof readWithdrawState>>;
+  try {
+    st = await readWithdrawState(g);
+  } catch {
+    // fail closed: a path that cannot be read is never quoted as open
+    return { ...base, fees: [], available: false, reason: 'Could not check the USDC bridge. Try again in a minute.' };
+  }
+  if (!st.open) return { ...base, fees: [], available: false, reason: st.reason };
+  const quote: Quote = { ...base, fees: [{ label: 'Bridge fee', amount: 0n, symbol: 'USDC.e' }], available: true };
+  if (sender) {
+    const eth = await pub(CHILD).getBalance({ address: sender }).catch(() => undefined);
+    if (eth === 0n) return { ...quote, available: false, reason: 'You need a little ETH on Gully Chain for gas (testnet faucet)' };
+  }
+  return quote;
+}
+
+/** The two wallet steps of a gateway withdrawal on Gully Chain: approve the L2 USDC gateway, then the router burn. */
+async function executeGatewayWithdraw(q: Quote, sender: Address, to: Address, onStep: (u: StepUpdate) => void): Promise<Hash> {
+  const g = USDC_GATEWAY!;
+  const wc = walletClient(CHILD);
+  const client = pub(CHILD);
+  const amount = q.req.amount;
+  const bal = await client.readContract({ address: g.childUsdc, abi: erc20Abi, functionName: 'balanceOf', args: [sender] });
+  if (bal < amount) throw new Error('Not enough USDC.e on Gully Chain');
+  const allowance = await client.readContract({ address: g.childUsdc, abi: erc20Abi, functionName: 'allowance', args: [sender, g.childGateway] });
+  if (allowance < amount) {
+    onStep({ step: 'approve', state: 'active' });
+    const ah = await wc.writeContract({ address: g.childUsdc, abi: erc20Abi, functionName: 'approve', args: [g.childGateway, amount], chain: wc.chain, account: sender });
+    await client.waitForTransactionReceipt({ hash: ah });
+  }
+  onStep({ step: 'approve', state: 'done' });
+  onStep({ step: 'send', state: 'active' });
+  const args = withdrawArgs(g, { to, amount });
+  // simulate first: a revert (paused, not enough allowance) shows its reason before the wallet opens
+  await client.simulateContract({ address: g.childRouter, abi: childRouterAbi, functionName: 'outboundTransfer', args, account: sender });
+  return wc.writeContract({ address: g.childRouter, abi: childRouterAbi, functionName: 'outboundTransfer', args, chain: wc.chain, account: sender });
+}
+
 const GATEWAY_DUMMY_TO: Address = '0x000000000000000000000000000000000000dEaD';
 
 function gatewaySteps(): StepDef[] {
@@ -276,6 +362,7 @@ async function executeGateway(q: Quote, sender: Address, to: Address, onStep: (u
 /** quote() with the network gates: lanes that are not deployed are closed, and the Phase 1 caps apply (mainnet). */
 async function quote(req: QuoteRequest): Promise<Quote> {
   // multi-chain routes: "Coming soon" until deployed (laneQuote), no Phase 1 caps (those are the classic mainnet lanes)
+  if (isGatewayWithdrawReq(req)) return gatewayWithdrawQuote(req);
   if (req.kind === 'fast' && isGatewayReq(req)) return gatewayQuote(req);
   if (req.kind === 'fast' && mcRoute(req.fastRouteId)) return laneQuote(req);
   if (req.kind === 'canonical' && !CANONICAL_READY) return closedQuote(req, 'Canonical bridge opens on launch day');
@@ -590,7 +677,9 @@ async function execute(given: Quote, onStep: (u: StepUpdate) => void): Promise<T
   const client = pub(q.from);
   let hash: Hash;
   let destHead: bigint | undefined;
-  if (req.kind === 'fast' && q.gateway) {
+  if (q.gatewayWithdraw) {
+    hash = await executeGatewayWithdraw(q, sender, recipient as Address, onStep);
+  } else if (req.kind === 'fast' && q.gateway) {
     destHead = await pub(CHILD).getBlockNumber().catch(() => undefined);
     hash = await executeGateway(q, sender, recipient as Address, onStep);
   } else if (req.kind === 'fast') {
@@ -659,7 +748,15 @@ async function execute(given: Quote, onStep: (u: StepUpdate) => void): Promise<T
   rec.destFromBlock = destHead?.toString();
   if (receipt.status !== 'success') return { ...rec, status: 'failed', error: 'Transaction reverted' };
   onStep({ step: 'send', state: 'done', tx: hash });
-  if (req.kind === 'fast' && q.gateway) {
+  if (q.gatewayWithdraw) {
+    // tracked and claimed like an ETH withdrawal: the outbox position of the L2ToL1Tx in this receipt
+    rec.kind = 'canonical';
+    rec.gateway = true;
+    rec.routeId = undefined;
+    rec.position = positionFromReceipt(receipt);
+    if (rec.position === undefined) return { ...rec, status: 'failed', error: 'Withdrawal message not found in the receipt' };
+    rec.status = 'challenge';
+  } else if (req.kind === 'fast' && q.gateway) {
     rec.gateway = true;
     rec.status = 'relaying';
   } else if (req.kind === 'fast') {
@@ -685,7 +782,7 @@ async function execute(given: Quote, onStep: (u: StepUpdate) => void): Promise<T
 async function track(rec: TransferRecord): Promise<TransferRecord> {
   const upd = (p: Partial<TransferRecord>) => ({ ...rec, ...p, updatedAt: Date.now() });
   if (['delivered', 'claimed', 'failed'].includes(rec.status)) return rec;
-  if (rec.gateway) {
+  if (rec.gateway && rec.direction !== 'withdraw') {
     const tx = await gatewayArrival(getAddress(rec.recipient), BigInt(rec.amount), rec.destFromBlock).catch(() => undefined);
     return tx ? upd({ status: 'delivered', destTx: tx }) : rec;
   }
@@ -786,9 +883,72 @@ async function claim(rec: TransferRecord, onStep: (u: StepUpdate) => void): Prom
   return { ...rec, status: 'claimed', claimTx: hash, updatedAt: Date.now() };
 }
 
-/** Canonical withdrawals paying out to `address`, newest first. */
+/** The outbox position (leaf) of the L2ToL1Tx in a child-chain receipt. */
+export function positionFromReceipt(receipt: Pick<TransactionReceipt, 'logs'>): string | undefined {
+  for (const l of receipt.logs) {
+    try {
+      return decodeEventLog({ abi: [l2ToL1TxEvent], data: l.data, topics: l.topics }).args.position.toString();
+    } catch {
+      /* other */
+    }
+  }
+  return undefined;
+}
+
+/** USDC.e withdrawals paying out to `address` (L2 USDC gateway WithdrawalInitiated), as canonical withdraw records. */
+async function usdcWithdrawalsOf(address: Address, size: bigint | undefined, eta: number): Promise<TransferRecord[]> {
+  const g = USDC_GATEWAY;
+  if (!g) return [];
+  const logs = await pub(CHILD).getLogs({
+    address: g.childGateway,
+    event: withdrawalInitiatedEvent,
+    args: { _to: address },
+    fromBlock: 0n,
+    toBlock: 'latest',
+  });
+  const out: TransferRecord[] = [];
+  for (const l of [...logs].reverse()) {
+    const a = l.args;
+    const position = a._l2ToL1Id!;
+    const [spent, block] = await Promise.all([
+      pub(PARENT).readContract({ address: CANONICAL.outbox, abi: outboxAbi, functionName: 'isSpent', args: [position] }),
+      pub(CHILD).getBlock({ blockNumber: l.blockNumber! }).catch(() => undefined),
+    ]);
+    out.push({
+      v: 2,
+      id: l.transactionHash!,
+      kind: 'canonical',
+      direction: 'withdraw',
+      gateway: true,
+      from: CHILD,
+      to: PARENT,
+      amount: a._amount!.toString(),
+      sendSymbol: 'USDC.e',
+      receiveSymbol: 'USDC',
+      decimals: 6,
+      receiveDecimals: 6,
+      sender: a._from!,
+      recipient: a._to!,
+      originTx: l.transactionHash!,
+      position: position.toString(),
+      createdAt: block ? Number(block.timestamp) * 1000 : Date.now(),
+      updatedAt: Date.now(),
+      status: spent ? 'claimed' : size !== undefined && size > position ? 'claimable' : 'challenge',
+      etaSeconds: eta,
+    });
+  }
+  return out;
+}
+
+/** Canonical withdrawals paying out to `address` (ETH and USDC.e), newest first. */
 async function withdrawalsOf(address: Address): Promise<TransferRecord[]> {
   if (!CANONICAL_READY) return [];
+  const usdc = (async () => usdcWithdrawalsOf(address, await confirmedSendCount().catch(() => undefined), await withdrawEtaSeconds()))();
+  const [eth, u] = await Promise.all([ethWithdrawalsOf(address), usdc.catch(() => [] as TransferRecord[])]);
+  return [...eth, ...u].sort((x, y) => y.createdAt - x.createdAt);
+}
+
+async function ethWithdrawalsOf(address: Address): Promise<TransferRecord[]> {
   const logs = await pub(CHILD).getLogs({
     address: CANONICAL.arbSys,
     event: l2ToL1TxEvent,
