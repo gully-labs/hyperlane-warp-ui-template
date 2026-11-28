@@ -164,7 +164,7 @@ export function hydrate(root = document) {
   window.addEventListener('resize', refit); refit();
   return () => { top.__gcn = false; ro?.disconnect(); window.removeEventListener('resize', refit); btn?.removeEventListener('click', onMenu); nav?.removeEventListener('click', onNav); th?.removeEventListener('click', onTheme); document.removeEventListener('keydown', onKey); mq?.removeEventListener?.('change', onMq); };
 }
-const FIT = ['gcn-f1', 'gcn-f2', 'gcn-f3', 'gcn-f4', 'gcn-f5'];
+const FIT = ['gcn-f1', 'gcn-f2', 'gcn-f3', 'gcn-f4', 'gcn-f5', 'gcn-f6'];
 /** Drop the least important header parts one step at a time until the row fits its bar (no sideways scroll at any width,
  *  whatever the surface puts in the slot). Called by hydrate on resize and when the slot changes size. */
 export function fit(top) {
