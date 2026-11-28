@@ -9,6 +9,7 @@ import { GullyChainSwitcher } from '../../gc-switcher/GullyChainSwitcher';
 import { addGullyChainUsdc, USDCE } from './addUsdc';
 import { fitHeader } from './headerFit';
 import { toast } from './toasts';
+import { LABEL, NEXT, setThemePref, useTheme } from './theme';
 
 const NAV_ALL: { label: string; icon: IconName; href: string | null; ext?: boolean }[] = [
   { label: 'Bridge', icon: 'bridge', href: '#bridge' },
@@ -26,6 +27,7 @@ export function Header({ className = '' }: { className?: string }) {
   const [open, setOpen] = useState(false);
   const bar = useRef<HTMLDivElement>(null);
   useEffect(() => (bar.current ? fitHeader(bar.current, ['pill', 'chip', 'labels', 'menu']) : undefined), []);
+  const [pref, theme] = useTheme();
   return (
     <header className={`top ${className}`}>
       <div className="top-in" ref={bar}>
@@ -33,7 +35,7 @@ export function Header({ className = '' }: { className?: string }) {
         <a className="brand" href={LINKS.chain} aria-label="Gully Chain home">
           <img src="brand/logo/gc-icon.svg" width={32} height={32} alt="Gully Chain" />
         </a>
-        <GullyChainSwitcher current="bridge" theme="dark" logo="off" className="gcs" />
+        <GullyChainSwitcher current="bridge" theme={theme} logo="off" className="gcs" />
         <nav className={`nav ${open ? 'nav-open' : ''}`} aria-label="Main">
           {NAV.map((n) =>
             n.ext ? (
@@ -67,6 +69,10 @@ export function Header({ className = '' }: { className?: string }) {
           </Ext>
           <GullySignIn />
           <WalletButton compact />
+          {/* Light / Dark / System: one button, Dark first; the choice is saved on this device (public/theme-boot.js applies it before paint) */}
+          <button type="button" className="icon-btn theme-btn" data-theme-btn data-pref={pref} aria-label={`Theme: ${LABEL[pref]}. Switch to ${LABEL[NEXT[pref]]}`} title={`Theme: ${LABEL[pref]}`} onClick={() => setThemePref(NEXT[pref])}>
+            <Icon name={pref === 'dark' ? 'moon' : pref === 'light' ? 'sun' : 'monitor'} size={18} />
+          </button>
           <button className="icon-btn menu-btn" aria-label="Menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
             <Icon name={open ? 'x' : 'menu'} />
           </button>

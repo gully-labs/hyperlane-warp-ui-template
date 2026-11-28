@@ -179,7 +179,7 @@ table.sr { display: block; }
 .feed-in { animation: feedin 0.5s ease both; }
 @keyframes feedin { from { opacity: 0; transform: translateY(-6px); } }
 .feed-kind { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 800; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
-.feed-fast { color: var(--gc-cyan); background: var(--gn-info-bg); }
+.feed-fast { color: var(--gn-info); background: var(--gn-info-bg); } /* tag text on the tag fill (AA in both themes; emerald on deep green was 3.7:1) */
 .feed-canonical { color: var(--gn-c3); background: color-mix(in srgb, var(--gn-blue) 14%, transparent); }
 .feed-dir { display: inline-flex; align-items: center; gap: 4px; color: var(--gn-text-3); }
 .feed-amt { font-family: var(--mono); font-weight: 500; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

@@ -28,7 +28,7 @@
 .earn-delivered p { margin: 0; display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: var(--gn-text); }
 .earn-delivered p svg { flex: none; margin-top: 2px; color: var(--gn-link); }
 .earn-delivered .btn { justify-self: start; text-decoration: none; }
-.earn-delivered small { font-size: 12px; }
+.earn-delivered small { font-size: 12px; color: var(--gn-text-2); } /* on the tag fill the muted text was 3:1 */
 @media (max-width: 480px) {
   .earn-num { font-size: 17px; }
   .earn-risks summary small { display: none; }
