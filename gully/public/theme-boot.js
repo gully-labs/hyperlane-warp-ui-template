@@ -1,0 +1,4 @@
+// Theme before first paint, as a file because the site CSP allows no inline script. Dark is the default; ?theme=dark|light|system
+// wins for that visit; else the saved choice (localStorage gullychain-theme, the key gullychain.xyz uses). src/ui/common/theme.ts
+// reads the same two attributes after React starts.
+(function(d){var q=null,p='dark';try{q=new URLSearchParams(location.search).get('theme')}catch(e){}try{p=q||localStorage.getItem('gullychain-theme')||'dark'}catch(e){p=q||'dark'}if(p!=='light'&&p!=='system')p='dark';var t=p==='system'?(window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'):p;d.setAttribute('data-theme',t);d.setAttribute('data-pref',p);var m=document.querySelector('meta[name="theme-color"]');if(m&&t==='light')m.setAttribute('content','#F3F6F5')})(document.documentElement)

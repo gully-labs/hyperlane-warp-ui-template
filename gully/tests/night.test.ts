@@ -93,7 +93,9 @@ describe('brand kit files on the black pages', () => {
     expect(readFileSync(join(app, 'scripts/build-staging.mjs'), 'utf8')).toContain("VITE_SITE_URL: 'https://testnet-bridge.gullychain.xyz/'");
     expect(html).toMatch(/name="theme-color" content="#0A0F0E"/);
     expect(readFileSync(join(app, 'public/site.webmanifest'), 'utf8')).toContain('"theme_color": "#0A0F0E"');
-    expect(readFileSync(join(app, 'src/ui/common/shell.tsx'), 'utf8')).toMatch(/theme="dark"/);
+    // Light / Dark / System (2026-11-28): the switcher follows the theme shown; Dark is the default (src/ui/common/theme.ts)
+    expect(readFileSync(join(app, 'src/ui/common/shell.tsx'), 'utf8')).toMatch(/theme=\{theme\}/);
+    expect(readFileSync(join(app, 'src/ui/common/theme.ts'), 'utf8')).toContain("? v : 'dark'");
   });
 });
 
@@ -106,7 +108,7 @@ describe('navigation reach (gc-switcher 1.8.4 + footer)', () => {
     expect(js).toMatch(/id: 'ecosystem'[^}]*https:\/\/gullychain\.xyz\/ecosystem\//);
     expect(js).toMatch(/showPopover\(\)/);
     const shell = readFileSync(join(app, 'src/ui/common/shell.tsx'), 'utf8');
-    expect(shell).toMatch(/<GullyChainSwitcher current="bridge" theme="dark"/);
+    expect(shell).toMatch(/<GullyChainSwitcher current="bridge" theme=\{theme\}/);
   });
   it('footer links the dev portal, the chain ecosystem page and status', () => {
     const parts = readFileSync(join(app, 'src/ui/common/parts.tsx'), 'utf8');

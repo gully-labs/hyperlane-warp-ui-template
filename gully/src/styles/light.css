@@ -1,0 +1,65 @@
+/* Gully Bridge, Light theme (Light / Dark / System, owner rule 2026-11-26: one design standard). Loaded last.
+   Dark stays the default and is untouched: every rule here is under :root[data-theme="light"] (set before first paint by
+   public/theme-boot.js, kept by src/ui/common/theme.ts).
+   No new colours: the values are the Light set of gullychain.xyz (gully-ops sites/_shared/chain-hybrid/h.css,
+   [data-theme="light"]: ground #F3F6F5, surface #FFFFFF, #EBF0EE, #DEE6E3, lines #D5DEDB / #B4C2BE, text #0A0F0E / #26302E /
+   #52625E, link #00663F, accent #007A4B, tag #D6F7E8 / #005B39, warn #FEF3C7 / #8A4B00, error and down #B91C1C, up #047857,
+   primary hover #00B36B, series #00A464 / #B45309) plus the kit v4 --gc-* tokens. They are mapped onto the --gn-* ROLES, so
+   every rule of base.css, a/b/c.css, earn.css and night.css follows without a second copy. tests/light-theme.test.ts checks
+   the AA pairs; tests/theme-check.mjs checks every screen in a real browser. */
+:root[data-theme="light"] {
+  color-scheme: light;
+  /* grounds and surfaces */
+  --gn-night: #F3F6F5; --gn-bg: #F3F6F5; --gn-black: var(--gc-ink);
+  --gn-ink: #FFFFFF; --gn-surface: #FFFFFF; --gn-surface-2: #EBF0EE; --gn-surface-3: #DEE6E3;
+  --gn-line: #D5DEDB; --gn-line-strong: #B4C2BE; --gn-line-accent: color-mix(in srgb, #007A4B 45%, transparent);
+  /* text */
+  --gn-white: #0A0F0E; --gn-text: #0A0F0E; --gn-text-2: #26302E; --gn-text-3: #52625E; --gn-muted: #52625E;
+  --gn-link: #00663F; --gn-link-hover: #0A0F0E;
+  /* accent roles: fills and labels #007A4B (white on it 5.4:1), highlight / live text #00663F */
+  --gn-cyan: #007A4B; --gn-green: #00663F; --gn-blue: #D6F7E8;
+  --gn-on-cyan: #FFFFFF; --gn-on-blue: #005B39;
+  /* semantic */
+  --gn-ok: #005B39; --gn-ok-bg: #D6F7E8;
+  --gn-info: #005B39; --gn-info-bg: #D6F7E8;
+  --gn-warn: #8A4B00; --gn-warn-bg: #FEF3C7;
+  --gn-danger: #B91C1C; --gn-danger-bg: color-mix(in srgb, #B91C1C 10%, transparent);
+  --gn-live: #00663F; --gn-badge-bg: #D6F7E8; --gn-badge-fg: #005B39;
+  --gn-up: #047857; --gn-down: #B91C1C;
+  /* charts */
+  --gn-c1: #00A464; --gn-c2: #52625E; --gn-c3: #B45309; --gn-c4: #007A4B; --gn-c5: #52625E; --gn-c-highlight: #007A4B;
+  --gn-grid: #D5DEDB; --gn-area: color-mix(in srgb, #00A464 16%, transparent);
+  /* elevation: a line plus a soft shadow */
+  --gn-shadow: 0 0 0 1px var(--gn-line), 0 10px 30px rgba(10, 15, 14, .10);
+  --gn-shadow-pop: 0 0 0 1px var(--gn-line-strong), 0 10px 30px rgba(10, 15, 14, .10);
+  --gn-glow: 0 0 0 1px var(--gn-line-accent), 0 0 32px color-mix(in srgb, var(--gc-emerald) 18%, transparent);
+  --gn-focus: 0 0 0 2px #F3F6F5, 0 0 0 4px #00663F;
+  /* buttons: primary stays emerald with ink text (8.8:1); hover is the Light primary hover */
+  --gn-btn-pri-hover: #00B36B;
+  --gn-btn-sec-fg: #00663F; --gn-btn-sec-bd: #007A4B; --gn-btn-sec-hover: color-mix(in srgb, #007A4B 10%, transparent);
+  --gn-btn-ghost-hover: #EBF0EE;
+  --gn-btn-chip-bg: #FFFFFF; --gn-btn-chip-fg: #00663F;
+}
+/* ink text on the emerald and mint fills (the dark theme writes them with the night ground, which is light here) */
+:root[data-theme="light"] .start-b,
+:root[data-theme="light"] .badge-rec { color: var(--gn-on-primary); }
+/* amber text (the ARB letter mark, the Cheapest-lane chip): the series amber is 4.4:1 on the raised surface, the warning text colour is AA */
+:root[data-theme="light"] .chain-mark-arb,
+:root[data-theme="light"] .feed-canonical { color: var(--gn-warn); }
+/* modal veil: ink, so the white sheet reads above the page */
+:root[data-theme="light"] .modal-bg { background: color-mix(in srgb, var(--gc-ink) 45%, transparent); }
+/* the footer stays the ink band in both themes: the kit badges on it are the dark-ground files (badge-dark.png, the Gully
+   Labs dark badge), used byte-identical, so the band keeps the dark roles */
+:root[data-theme="light"] .foot {
+  color-scheme: dark; background: var(--gc-ink);
+  --gn-line: color-mix(in srgb, var(--gc-muted) 45%, transparent); --gn-line-strong: color-mix(in srgb, var(--gc-muted) 80%, transparent);
+  --gn-text: var(--gc-white); --gn-text-2: var(--gc-silver); --gn-text-3: var(--gc-muted-text);
+  --gn-link: var(--gc-mint); --gn-link-hover: var(--gc-white); --gn-cyan: var(--gc-emerald);
+  border-top-color: var(--gn-line); color: var(--gn-text-2);
+}
+:root[data-theme="light"].is-embed .foot { background: var(--gc-ink); border-radius: var(--gn-r); padding: 12px; }
+/* the "Powered by Gully Core" mark is the dark-ground file (never restyled): it sits on an ink plate */
+:root[data-theme="light"] .gc-core-mark { background: var(--gc-ink); padding: 6px 10px; border-radius: var(--gn-r-sm); }
+/* theme button (both themes) */
+.theme-btn { flex: none; color: var(--gn-text-2); }
+.theme-btn:hover { color: var(--gn-text); border-color: var(--gn-line-strong); background: var(--gn-surface-2); }
