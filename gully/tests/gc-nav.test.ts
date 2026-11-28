@@ -40,5 +40,8 @@ describe('Gully Chain navigation = the shared gc-nav kit', () => {
   it('the page never spells GullyChain (user-facing text)', () => {
     const index = readFileSync(join(app, 'index.html'), 'utf8');
     expect(index.replace(/(href|src)="[^"]*"/g, '')).not.toMatch(/GullyChain(?![A-Za-z])/);
+    // the title, description and JSON-LD are filled from vite.config.ts per network
+    const vite = readFileSync(join(app, 'vite.config.ts'), 'utf8');
+    expect(vite.slice(vite.indexOf('const net ='), vite.indexOf('return {'))).not.toMatch(/'GullyChain/);
   });
 });
