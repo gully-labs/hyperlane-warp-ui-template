@@ -91,7 +91,8 @@ export const footerHTML = (opts = {}) => toHTML(footerModel(opts));
 
 // ---------------------------------------------------------------- audit (guard tests + live checks)
 const norm = (href) => { try { const u = new URL(href, URLS.home); return u.href; } catch { return href; } };
-const linkText = (h) => h.replace(/<svg[\s\S]*?<\/svg>/g, '').replace(/<[^>]+>/g, ' ').replace(/&amp;/g, '&').replace(/&#x27;|&#39;/g, "'").replace(/\s+/g, ' ').trim();
+// a site may add the standard screen-reader hint to links that open a new tab; it is not part of the label
+const linkText = (h) => h.replace(/<svg[\s\S]*?<\/svg>/g, '').replace(/\(opens in a new tab\)/g, '').replace(/<[^>]+>/g, ' ').replace(/&amp;/g, '&').replace(/&#x27;|&#39;/g, "'").replace(/\s+/g, ' ').trim();
 /** [{ href, text }] of every link inside the element marked data-gc-nav="<part>" in a page's HTML (first one). */
 export function linksIn(html, part) {
   const m = html.match(new RegExp(`<(header|footer)[^>]*data-gc-nav="${part}"[\\s\\S]*?</\\1>`));
@@ -116,7 +117,7 @@ export function auditNav(html, { header = true, footer = true, app = true } = {}
     const g = got.map(key), w = want.map(key);
     for (let n = 0; n < Math.max(g.length, w.length); n++) if (g[n] !== w[n]) { out.push(`${part} link ${n + 1}: page "${g[n] || '(none)'}", kit "${w[n] || '(none)'}"`); break; }
   }
-  if (/Gully ?Chain/.test(html) && /GullyChain(?![A-Za-z]*\.(?:svg|png|js|json))/.test(html.replace(/<(script|style)[\s\S]*?<\/\1>/g, '').replace(/(href|src|content)="[^"]*"/g, ''))) out.push('spells "GullyChain" (write "Gully Chain")');
+  if (/Gully ?Chain/.test(html) && /(?<![/@])GullyChain(?![A-Za-z]*\.(?:svg|png|js|json))/.test(html.replace(/<(script|style)[\s\S]*?<\/\1>/g, '').replace(/(href|src|content)="[^"]*"/g, ''))) out.push('spells "GullyChain" (write "Gully Chain")');
   if (/id="gxb"|gully-x-banner\.js/.test(html)) out.push('carries the top X banner (social links live in the footer)');
   return out;
 }

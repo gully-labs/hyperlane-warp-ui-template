@@ -6,7 +6,7 @@
 // Gully Chain products (Sign in with Gully ID and the app entry are features); "Gully Chain" is two words; the header action
 // "Start building" goes to the developer portal quickstart (gc-chrome.json); social links live in the footer (no top X bar).
 // Community items = sites/_shared/community.json (the official channel list), same order.
-export const VERSION = '1.0.1';
+export const VERSION = '1.0.2';
 
 export const URLS = {
   home: 'https://gullychain.xyz/',
@@ -85,6 +85,7 @@ export const FOOTER = {
       { label: 'Ecosystem', href: URLS.ecosystem, icon: 'compass' },
       { label: 'Bridge', href: URLS.bridge, icon: 'bridge' },
       { label: 'Explorer', href: URLS.explorer, icon: 'blocks' },
+      { label: 'Gully Core app', href: 'https://gullychain.xyz/core/', icon: 'swap' },
       { label: 'Gully ID', href: 'https://gullyid.xyz/', icon: 'user' },
       { label: 'Live stats', href: 'https://gullychain.xyz/stats/', icon: 'chart' },
       { label: 'Testnet', href: 'https://gullychain.xyz/testnet/', icon: 'cpu' },

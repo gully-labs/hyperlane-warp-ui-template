@@ -18,7 +18,9 @@ export function createGcNav(React) {
   };
   function GcHeader({ children, menu, ...opts }) {
     const ref = React.useRef(null);
-    React.useEffect(() => (ref.current ? hydrate(ref.current.parentNode || document) : undefined), []);
+    // before paint, so the fit step never moves header items after the first frame (CLS); useEffect when there is no DOM
+    const useIso = typeof window === 'undefined' ? React.useEffect : React.useLayoutEffect;
+    useIso(() => (ref.current ? hydrate(ref.current.parentNode || document) : undefined), []);
     const el = build(headerModel(opts), children, menu);
     return React.cloneElement(el, { ref });
   }

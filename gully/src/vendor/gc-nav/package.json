@@ -1,6 +1,6 @@
 {
   "name": "@gullylabs/gc-nav",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "description": "The one Gully Chain header and footer (owner 2026-11-28). Vendored byte-identical into every Gully Chain surface.",
   "type": "module",
