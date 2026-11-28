@@ -15,8 +15,10 @@ export interface UsdcGateway {
   parentUsdc: Address;
   /** USDC.e on Gully Chain, minted by the L2 USDC gateway */
   childUsdc: Address;
-  /** the child-chain router, used to confirm that USDC maps to USDC.e */
+  /** the child-chain router (L2GatewayRouter): confirms that USDC maps to USDC.e, and is where withdrawals start */
   childRouter: Address;
+  /** L2USDCGateway on Gully Chain: the only minter of USDC.e; burns it on withdrawal (the contract that is approved) */
+  childGateway: Address;
   /** Circle's testnet faucet (choose Arbitrum Sepolia) */
   faucet: string;
 }
@@ -28,6 +30,8 @@ export const USDC_GATEWAY: UsdcGateway | undefined = IS_TESTNET
       parentUsdc: '0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d',
       childUsdc: '0x65Ba03c6FA90Ed549f465D4c8f2e784D6eEB7E76',
       childRouter: '0x32C680cA4c27A3566fE5Dfd4643fE420eE1039B7',
+      // checked on chain 2026-11-28: childRouter.getGateway(USDC) = this, its l2USDC() = USDC.e, its counterpart = l1Gateway
+      childGateway: '0xd9d07510ceefeeaf538bddbe4ee1b76e9f1a71b3',
       faucet: 'https://faucet.circle.com/',
     }
   : undefined;

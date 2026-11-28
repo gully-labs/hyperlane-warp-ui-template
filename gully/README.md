@@ -39,6 +39,12 @@ Until a route's config exists its tokens have `"address": null`: the chain and t
   the origin and delivery tx links and, under Details, the Hyperlane Explorer link.
 - **History.** `localStorage['gully-bridge:transfers']`, same key as before; older entries are migrated on load
   (`src/bridge/history.ts`).
+- **USDC over the canonical token bridge** (Arbitrum Sepolia, while no Hyperlane USDC route is deployed; `src/bridge/usdcGateway.ts`).
+  Deposit: approve the L1 USDC gateway, `L1GatewayRouter.outboundTransferCustomRefund`, USDC.e minted on Gully Chain in 10-15 min.
+  Withdraw (2026-11-28): approve the L2 USDC gateway, `L2GatewayRouter.outboundTransfer(USDC, to, amount, 0x)` burns USDC.e and posts
+  an L2ToL1Tx; after the rollup's challenge period (read from the rollup: about 45 min on testnet, about 7 days on mainnet) the user
+  claims on Arbitrum Sepolia with `Outbox.executeTransaction` (the same claim as an ETH withdrawal). Withdrawals to the connected
+  wallet are found again from the gateway's `WithdrawalInitiated` logs after a reload. Browser check: `tests/usdc-withdraw-check.mjs`.
 - URL: `?chain=sepolia|basesepolia|bsctestnet|solanadevnet` and `?token=USDC` preselect a chain and token.
 
 ## Why a separate app in this fork

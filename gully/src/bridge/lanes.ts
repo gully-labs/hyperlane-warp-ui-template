@@ -26,7 +26,7 @@ export interface TokenOption {
   live: boolean;
   /** a Cheapest lane exists for this token (the canonical Arbitrum bridge moves ETH only) */
   canonical: boolean;
-  /** USDC through the canonical Arbitrum token bridge (USDC gateways): approve, then deposit through the router */
+  /** USDC through the canonical Arbitrum token bridge (USDC gateways): deposit (approve + router), or withdraw (approve + burn, challenge period, claim) */
   gateway?: boolean;
 }
 
@@ -74,8 +74,8 @@ export function tokenOptions(remote: ChainKey, direction: Direction, src: LaneSo
     const b = r.tokens[to];
     if (!a || !b) continue;
     const g = src.usdcGateway;
-    if (g && r.key === 'USDC' && !r.deployed && remote === PARENT && direction === 'deposit') {
-      out.push(gatewayOption(r, g, from, to, a));
+    if (g && r.key === 'USDC' && !r.deployed && remote === PARENT) {
+      out.push(direction === 'deposit' ? gatewayOption(r, g, from, to, a) : gatewayWithdrawOption(r, g, from, to, b));
       continue;
     }
     out.push({
@@ -114,6 +114,32 @@ function gatewayOption(r: McRoute, g: UsdcGateway, from: ChainKey, to: ChainKey,
       decimals: 6,
       collateralAddress: null,
     },
+    live: true,
+    canonical: false,
+    gateway: true,
+  };
+}
+
+/** USDC.e on Gully Chain -> USDC on Arbitrum Sepolia over the canonical token bridge: burn, challenge period, claim. */
+function gatewayWithdrawOption(r: McRoute, g: UsdcGateway, from: ChainKey, to: ChainKey, b: McToken): TokenOption {
+  return {
+    id: r.id,
+    source: 'multichain',
+    remote: PARENT,
+    direction: 'withdraw',
+    from,
+    to,
+    send: {
+      chain: from,
+      address: g.childUsdc,
+      standard: 'ArbitrumUsdcGateway',
+      tokenType: 'synthetic',
+      symbol: 'USDC.e',
+      name: 'Bridged USDC (Gully Chain)',
+      decimals: 6,
+      collateralAddress: null,
+    },
+    receive: { ...b, chain: to, address: g.l1Router, tokenType: 'collateral', collateralAddress: g.parentUsdc, symbol: 'USDC', name: 'USD Coin', decimals: 6 },
     live: true,
     canonical: false,
     gateway: true,
